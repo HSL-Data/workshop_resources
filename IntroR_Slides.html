@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Introduction to R</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.19/header-attrs.js"></script>
+    <link href="libs/xaringanExtra-extra-styles-0.2.6/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <link href="libs/tachyons-4.12.0/tachyons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer_2.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: left, middle, inverse, title-slide
+
+.title[
+# Introduction to R
+]
+
+---
+
+
+
+
+
+
+
+# Tour of RStudio
+Welcome to R and RStudio!
+- R is the underlying statistical computing environment. Think of this like a car's engine.
+- RStudio is the Integrated Development Environment that we use to interact with R, making writing and reading code a lot easier. Think of RStudio like the dashboard of the car.
+
+## RStudio Panes 
+- On the top left is the **script** window. This is where we are going to write all of our code and notes.
+- On the lower left there's the **console** window. This is where R tells us what it thinks we told it and then the answer. This part is what R would look like (without RStudio)
+- The top right has the **environment** and history tabs. The environment is a list of all objects that R knows and the history tab shows all the code that has been run.
+- On the bottom right there's a window with lots of tabs. Files provides the file structure in the working directory. **Plots** is where your visualizations will appear. Packages shows all of the installed packages and one that are checked are opened. **Help** is where we will learn about functions when we need assistance and the Viewer is for viewing other kinds of output, like web content.
+---
+
+### RStudio Global Options
+
+- So that all of our set-ups look the same follow me to change a few settings. Go to Tools --&gt; Global Options
+
+  - In the Code menu check the box for "Soft-wrap R source files"
+  - In the R Markdown menu UNcheck the box for "Show output inline for all RMarkdown documents"
+  
+Once these options are set, they  will remain active for every R session you open on your local machine so you will not need to follow these steps again.
+
+### RMarkdown
+
+Today we are coding in an **RMarkdown** document. This is how I would recommend that you code your own projects too
+[(Here is a bit more about Projects in R)](https://hsl-data.github.io/workshop_resources/creating_projects.html). RMarkdown interweaves prose with code. Prose are written in plain text and R code is contained in gray "r code chunks". 
+
+To run code, place your cursor somewhere in the R chunk (between the lines with the backticks) and use `CTRL + ENTER` (also `CMD + ENTER` on mac)
+
+When you run code, it is sent from the script to the console where it is evaluated. Then R returns "the answer"
+
+The first thing we are going to do is read in data from a csv file. We are initially going to use the `read.csv` function which comes with your normal Base R installation. Later on, we will use a different version of this function.  For now, just run the code and see what happens.
+
+
+
+```r
+bigfoot &lt;- read.csv("bigfoot.csv")
+```
+
+---
+
+Looking at our environment window, we can see that the `bigfoot` dataset has been created. By looking in our console at the bottom, we can see a record of the code that has been run. 
+
+The goal today will be to become familiar with coding concepts in R and develop proficiency reading, writing, and running code in the RStudio environment. 
+
+### View a dataset
+
+Let's find out what our dataset looks like by `View()`ing the dataset.
+
+To `View()` the dataset in spreadsheet form, we can click on the dataset's name in the Environment tab. Notice that this action is accompanied by some code in the console telling us that we could also get there using code. Let's try it both ways
+
+
+```r
+#Use the View function to investigate your dataset.
+# View(bigfoot)
+```
+
+In the r chunk above, I have written my first code comment. Anything after a `#` sign is a comment. Use them liberally to *comment your code* to explain to yourself and others what the code is doing and why you have chosen to do it this way.
+
+- Commenting is helpful when you're testing things out during your analysis to 'turn off' parts of your script
+- Comments are also a big part of making your work reproducible for others and for your future self when you open this script a few months from now and need to remember what you were doing
+- Today I would like to challenge you to take notes directly in this document, _either as prose or as `# comments` in your r code chunks_.
+
+---
+# The arrow `&lt;-` creates R objects
+
+The arrow operator is created with the less than sign followed directly by the dash.
+
+We use it in R to create new objects.
+
+So far in our coding today, we have used the arrow operator once already, resulting in 1 object in our environment:
+
+1. We created our first object, `bigfoot`, when we read in our data from the csv file
+
+Let's use the arrow to create a few more R objects. First, let's create an object containing one value.
+
+
+```r
+object1 &lt;- 55
+```
+
+Notice that when you run code that has an `&lt;-` operator, the object is created in the environment. You will not see the value contained in the object in the console unless you ask R to print the object by calling its name:
+
+
+```r
+object1
+```
+
+```
+## [1] 55
+```
+
+```r
+# R is case sensitive! Watch your casing and spelling
+
+# Object1
+```
+
+---
+We can overwrite the value of object1 by re-assigning it
+
+
+```r
+object1 &lt;- 70
+
+#then call its name to see the object
+object1
+```
+
+```
+## [1] 70
+```
+
+Now is a great time to save our script. Go to File --&gt; Save or `CTRL+S` (pc) or `CMD+S` (mac).
+
+Where is the file saving? Because I set up a project file at the beginning, your file is saving inside that folder. For your own work, I would suggest creating projects to make data/file management much easier.
+
+---
+
+## Functions
+
+A function is a verb; it tells R to do something. To call an R function, we call the name of the function followed directly by `()`. Recall our use of the `read.csv()` and `View()` functions. The items passed to the function inside the () are called *arguments*. Arguments change the way a function behaves
+
+Some functions don't need any arguments
+
+```r
+Sys.Date() #get today's date
+```
+
+```
+## [1] "2023-01-24"
+```
+
+Some functions just take a single argument (like the `View` function). Let's get the square root of 961. Now let's get the square root of object1
+
+
+```r
+sqrt(961)
+```
+
+```
+## [1] 31
+```
+
+```r
+sqrt(object1)
+```
+
+```
+## [1] 8.3666
+```
+
+To learn more about the function, type `?` and then the function's name
+
+
+```r
+#?sqrt
+```
+---
+
+Sometimes functions have arguments that have a default value. In those cases, you can override the default value by specifying your own.
+
+For example, let's look at the help page for the `rnorm()` function
+
+```r
+#?rnorm
+```
+
+`rnorm()` generates random values from the normal distribution. We must supply the n argument since there is no default value, but there is a default value set for the mean and sd arguments.
+
+
+```r
+rnorm(n = 10)
+```
+
+```
+##  [1]  1.2297611 -0.2305227 -0.2425357  0.9978830
+##  [5]  0.3597447 -0.2868646  0.9150062 -0.4378940
+##  [9] -0.4479837  0.9733321
+```
+
+```r
+rnorm(n = 10, mean = 50, sd = 5)
+```
+
+```
+##  [1] 48.17598 47.77450 60.54048 42.92877 48.15879
+##  [6] 56.77461 47.82795 49.63048 48.41252 53.66766
+```
+
+```r
+# don't specify n
+# rnorm(mean = 50, sd = 5)
+```
+---
+
+In the above examples, we have labeled our arguments according to their names in the help menu. If you do not label the arguments, they will be called into the function in the order given in the help menu.
+
+
+```r
+rnorm(10, 50, 5)
+```
+
+```
+##  [1] 57.25518 46.79578 45.45774 40.36274 49.72871
+##  [6] 55.18572 46.56540 58.42975 52.34334 48.75174
+```
+
+```r
+#out of order, but works bc the arguments are labeled
+rnorm(n = 10, sd = 5, mean = 50)
+```
+
+```
+##  [1] 38.25601 46.80673 55.16144 46.01722 51.20276
+##  [6] 54.90432 47.88097 49.03688 50.88509 40.24770
+```
+
+To improve readability (and accuracy) of your code, we would recommend labeling your arguments.
+
+---
+### EXERCISE 1
+
+1. Use the arrow operator to create an object called object2 that stores 100 draws from a normal distribution with mean = 500 and sd = 100.
+
+2. Call `hist(object2)` to create a histogram of your normal distribution
+
+
+```r
+object2 &lt;- rnorm(n = 100, mean = 500, sd = 100)
+hist(object2)
+```
+
+&lt;img src="IntroR_Slides_files/figure-html/unnamed-chunk-12-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+------------------------------------
+---
+
+Look at the environment. What does it tell you about object2?
+
+Let's create some more R objects that are collections of several values. To accomplish this, we will use the function `c()`, which stands for concatenate or combine. Usually functions are named with a full word describing what they do but because combining items together is so common, this function gets a very short name.
+
+
+```r
+object3 &lt;- c(55, 60, 35, 70)
+```
+
+Check out the environment now. It worked! We created object3
+
+Let's create another object containing a different type of data
+
+
+```r
+object4 &lt;- c("Ash", "Ollie", "Cal")
+```
+
+---
+## More Functions
+
+Let's `sum()` everything in object3
+
+
+```r
+sum(object3)
+```
+
+```
+## [1] 220
+```
+
+Try the `mean()` function on your own for object3.
+
+
+```r
+mean(object3)
+```
+
+```
+## [1] 55
+```
+
+What happens if we try to `sum()` object4?
+
+
+```r
+# sum(object4)
+```
+
+What if we take the square root of object3? Or if we add object1 to object3
+
+
+```r
+sqrt(object3)
+```
+
+```
+## [1] 7.416198 7.745967 5.916080 8.366600
+```
+
+```r
+object1 + object3
+```
+
+```
+## [1] 125 130 105 140
+```
+
+It worked! Most functions in R are **vectorized** meaning that they will work on a vector as well as a single value. This means that in R, we usually do not need to write loops like we would in other languages.
+---
+
+# EXERCISE 2
+
+Try the following functions on object3 and on object4. What do each of the below functions do? Optionally, call up the help menu for these functions to learn more.
+
+1. class()
+2. length()
+3. summary()
+4. str()
+
+
+
+---------------------
+---
+### Functions to inspect dataframes
+
+R has a few different types of objects. We already saw some vectors (one dimensional collection of items) before when we created object2, object3, and object4.
+
+R's dataframes store two dimensional, tabular, heterogeneous data. Two-dimensional and tabular meaning a table of rows and columns that form the 2 dimensions. Heterogeneous meaning that each column can contain a different type of data (i.e., one column Age is numeric while Gender is a character).
+
+A dataset is considered "tidy" when each variable forms a column, each observation forms a row, and each cell only contains one piece of data. This means that the entries within a column should all be the same type as each other.
+
+Let's remind ourselves how to look at the whole dataset. Does anyone remember from before, how do we see the whole dataset in the spreadsheet viewer?
+
+
+```r
+#View(bigfoot)
+```
+
+
+We can also directly call the `dim()` function to see the dimensions of the `bigfoot` dataset.
+
+
+```r
+dim(bigfoot) #rows then columns
+```
+
+```
+## [1] 5021   11
+```
+
+We can ask for the number of rows and the number of columns
+
+
+```r
+nrow(bigfoot)
+```
+
+```
+## [1] 5021
+```
+
+```r
+ncol(bigfoot)
+```
+
+```
+## [1] 11
+```
+---
+
+To see all the column headings we can call the function `names()`
+
+
+```r
+names(bigfoot)
+```
+
+```
+##  [1] "title"       "state"       "date"       
+##  [4] "season"      "precip_type" "number"     
+##  [7] "temperature" "dew_point"   "humidity"   
+## [10] "visibility"  "uv_index"
+```
+
+
+And probably the two you'll use the most to inspect data frames, because they are the most descriptive, are `summary()` and `str()`, both of which we used above to inspect vectors
+
+
+```r
+summary(bigfoot)
+```
+
+```
+##     title              state          
+##  Length:5021        Length:5021       
+##  Class :character   Class :character  
+##  Mode  :character   Mode  :character  
+##                                       
+##                                       
+##                                       
+##                                       
+##      date              season         
+##  Length:5021        Length:5021       
+##  Class :character   Class :character  
+##  Mode  :character   Mode  :character  
+##                                       
+##                                       
+##                                       
+##                                       
+##  precip_type            number       temperature    
+##  Length:5021        Min.   :   60   Min.   :-8.455  
+##  Class :character   1st Qu.: 4595   1st Qu.:46.767  
+##  Mode  :character   Median :15473   Median :59.360  
+##                     Mean   :21520   Mean   :57.843  
+##                     3rd Qu.:33979   3rd Qu.:70.380  
+##                     Max.   :71997   Max.   :94.030  
+##                                     NA's   :1835    
+##    dew_point         humidity        visibility    
+##  Min.   :-11.21   Min.   :0.0800   Min.   : 0.740  
+##  1st Qu.: 34.77   1st Qu.:0.6200   1st Qu.: 7.660  
+##  Median : 46.69   Median :0.7300   Median : 9.451  
+##  Mean   : 46.23   Mean   :0.7057   Mean   : 8.492  
+##  3rd Qu.: 59.00   3rd Qu.:0.8200   3rd Qu.:10.000  
+##  Max.   : 77.40   Max.   :1.0000   Max.   :10.000  
+##  NA's   :1648     NA's   :1648     NA's   :1972    
+##     uv_index     
+##  Min.   : 0.000  
+##  1st Qu.: 3.000  
+##  Median : 5.000  
+##  Mean   : 5.161  
+##  3rd Qu.: 8.000  
+##  Max.   :13.000  
+##  NA's   :1629
+```
+
+```r
+str(bigfoot)
+```
+
+```
+## 'data.frame':	5021 obs. of  11 variables:
+##  $ title      : chr  NA NA "Report 6496: Bicycling student has night encounter" NA ...
+##  $ state      : chr  "Alabama" "Alaska" "Rhode Island" "Pennsylvania" ...
+##  $ date       : chr  NA NA "1974-09-20" NA ...
+##  $ season     : chr  "Summer" "Fall" "Fall" "Summer" ...
+##  $ precip_type: chr  NA NA NA NA ...
+##  $ number     : int  30680 1261 6496 8000 703 9765 4983 31940 5692 438 ...
+##  $ temperature: num  NA NA 73.4 NA NA ...
+##  $ dew_point  : num  NA NA 65.7 NA NA ...
+##  $ humidity   : num  NA NA 0.86 NA NA 0.79 NA 0.68 0.45 NA ...
+##  $ visibility : num  NA NA 2.75 NA NA ...
+##  $ uv_index   : int  NA NA 4 NA NA 7 NA 8 8 NA ...
+```
+---
+## Accessing variables from a dataframes
+
+You might have noticed a `$` in front of the variable names in the `str()` output. That symbol is how we access individual variables, or columns, from a dataframe
+
+The syntax we want is dataframe$columnname
+Let's look at the title column
+
+
+```r
+bigfoot$title
+```
+
+That function calls the whole column, which is 5021 observations long. Usually printing out a long vector or column to the console is not useful.
+
+`head()` is a function allowing us to look at just the first 6 entries
+
+
+```r
+head(bigfoot$title)
+```
+
+```
+## [1] NA                                                                          
+## [2] NA                                                                          
+## [3] "Report 6496: Bicycling student has night encounter"                        
+## [4] NA                                                                          
+## [5] NA                                                                          
+## [6] "Report 9765: Motorist and children have daylight sighting near Burns Flat."
+```
+---
+What if we want to see the first 20 values? 
+
+Let's see if we can find out by calling help on the `head()` function
+
+
+```r
+#?head
+```
+
+The help menu tells us what `head()` does and it also specifies the other arguments that we could input to the `head()` function in the Arguments section. This is always a good section to check out. Remember that an argument is an option we specify to a function to change how the function operates. 
+
+Let's try adding the `n = ` argument to `head()`
+
+
+```r
+head(bigfoot$title, n = 20)
+```
+
+```
+##  [1] NA                                                                                                                                          
+##  [2] NA                                                                                                                                          
+##  [3] "Report 6496: Bicycling student has night encounter"                                                                                        
+##  [4] NA                                                                                                                                          
+##  [5] NA                                                                                                                                          
+##  [6] "Report 9765: Motorist and children have daylight sighting near Burns Flat."                                                                
+##  [7] "Report 4983: Sighting and vocalizations at a home in Wayne National Forest"                                                                
+##  [8] "Report 31940: Fishermen and Law Enforcement Officer Report Three Class A Sightings in Same Area Within a Year near the town of Somers"     
+##  [9] "Report 5692: Father and son hear vocalizations on Peavine Mt"                                                                              
+## [10] NA                                                                                                                                          
+## [11] "Report 55269: Dawn sighting at Stevens Brook outside Claremont"                                                                            
+## [12] "Report 59757: Possible daylight sighting of a Sasquatch on the Omaha Indian Reservation"                                                   
+## [13] "Report 751: Hunter describes described being stalked near Minot"                                                                           
+## [14] "Report 3339: Deep impressions seen in the snow"                                                                                            
+## [15] "Report 47215: Female fly fisherman's lucid recollection of classic territorial intimidation behavior of Saquatches ; 6mi NE of Mystic Lake"
+## [16] "Report 1757: Two separate sets of large footprints found"                                                                                  
+## [17] "Report 25662: Hiker spots a bigfoot in the mountains east of Butte"                                                                        
+## [18] "Report 30860: Daylight sighting by camper at Black Mountain Campground near Blue Ridge Parkway"                                            
+## [19] "Report 13276: Motorist has nightime sighting near Harmony"                                                                                 
+## [20] "Report 17550: Nighttime sighting by motorist near Mansfield"
+```
+---
+Although we can specify the head function without naming the arguments, it is good practice to label the arguments to clarify what the code is doing. However, it is conventional to skip labeling the first argument, x, since its label is easily assumed.
+
+You may have read in the help menu that `head()` has a companion function `tail()` that shows the last n rows
+
+
+```r
+tail(bigfoot$title, n = 20)
+```
+
+```
+##  [1] "Report 2363: Late night sighting by motorists along Highway 121"                                                       
+##  [2] "Report 48811: Four-wheeler riders are observed by a tall white biped at dusk near Philpot"                             
+##  [3] NA                                                                                                                      
+##  [4] "Report 37750: Possible encounters on a farm near Dry Ridge"                                                            
+##  [5] "Report 35456: Possible knocks, vocalizations and footprints found outside a home near Leitchfield"                     
+##  [6] "Report 16896: Possible sasquatch seen squatting in a road near Flatwoods"                                              
+##  [7] "Report 1265: Sighting of 8-foot tall, upright creature"                                                                
+##  [8] "Report 30596: Ginseng hunter recalls being terrified by a nighttime visitor on old mining property at the KY/VA border"
+##  [9] "Report 40278: Hunter in a ghillie suit on Pine Mountain has a close encounter"                                         
+## [10] "Report 25257: ATV riders find possible tracks outside Evarts"                                                          
+## [11] "Report 38980: Teen on four-wheeler has sighting on family property near Wallins"                                       
+## [12] "Report 1045: Father and son have a daylight encounter while deer hunting near Lawrenceburg"                            
+## [13] "Report 33187: Dual sighting in late afternoon by deer hunter in tree stand near Lawrenceburg"                          
+## [14] NA                                                                                                                      
+## [15] "Report 22941: Man tells of Grandmother's encounters with shaggy white creature near Scottsville"                       
+## [16] NA                                                                                                                      
+## [17] NA                                                                                                                      
+## [18] NA                                                                                                                      
+## [19] NA                                                                                                                      
+## [20] NA
+```
+---
+Let's calculate some descriptive statistics for the temperature of bigfoot sighting using the `temperature` variable
+
+
+```r
+mean(bigfoot$temperature)
+```
+
+```
+## [1] NA
+```
+
+For variables where there are missings, we will need to include an argument that removes the missings. 
+
+
+```r
+#?mean
+```
+
+Looking at the arguments section tells me that the argument I need to include is `na.rm = TRUE`
+
+```r
+mean(bigfoot$temperature, na.rm = TRUE)
+```
+
+```
+## [1] 57.84338
+```
+
+```r
+sd(bigfoot$temperature, na.rm = TRUE)
+```
+
+```
+## [1] 16.39659
+```
+---
+# EXERCISE 3
+
+1. What's the standard deviation for humidity (`humidity`)?
+2. Use the `table()` function and the `state` variable to find out how many observations are from Virginia 
+3. What's the maximum temperature for a bigfoot sighting (hint: `max()`)?
+
+
+```r
+sd(bigfoot$humidity, na.rm = TRUE)
+```
+
+```
+## [1] 0.1606262
+```
+
+```r
+table(bigfoot$state)
+```
+
+```
+## 
+##        Alabama         Alaska        Arizona 
+##             94             20             85 
+##       Arkansas     California       Colorado 
+##            101            417            127 
+##    Connecticut       Delaware        Florida 
+##             18              5            302 
+##        Georgia          Idaho       Illinois 
+##            126             96            237 
+##        Indiana           Iowa         Kansas 
+##             79             56             45 
+##       Kentucky      Louisiana          Maine 
+##            114             41             17 
+##       Maryland  Massachusetts       Michigan 
+##             34             29            216 
+##      Minnesota    Mississippi       Missouri 
+##             72             21            158 
+##        Montana       Nebraska         Nevada 
+##             51             15              7 
+##  New Hampshire     New Jersey     New Mexico 
+##             14             66             42 
+##       New York North Carolina   North Dakota 
+##            111             89              4 
+##           Ohio       Oklahoma         Oregon 
+##            303             97            249 
+##   Pennsylvania   Rhode Island South Carolina 
+##            115              5             41 
+##   South Dakota      Tennessee          Texas 
+##             13             96            230 
+##           Utah        Vermont       Virginia 
+##             58             10             79 
+##     Washington  West Virginia      Wisconsin 
+##            601            103             85 
+##        Wyoming 
+##             27
+```
+
+```r
+max(bigfoot$temperature, na.rm = TRUE)
+```
+
+```
+## [1] 94.03
+```
+---
+# Additional Functionality -&gt; Installing and Loading Packages.
+
+The next two sessions of this workshop series will show how to prepare data in a dataset and how to graph/visualize your data. 
+
+In order to use additional functionality in R, we bring in packages. The `install.packages()` installs the package to your local machine, while the `library()` command loads the functions from that package into the R environment so that we can use them. You need to run the `library` function everytime you open a new script/markdown file, but you do not need to run the `install.packages()` function everytime.
+
+
+```r
+#install.packages("tidyverse")
+library(tidyverse)
+```
+
+In this case, the code opened a library containing R functions we want to use. You can think of libraries like apps on your phone. We have now opened the app so we can use it. The output in the console specifies which libraries we have loaded. We can see based on the output from the `library(tidyverse)` line that the tidyverse is actually a megapackage, containing 8 packages. All of these packages share a similar syntax in an attempt to simplify coding and readability for R users. Aside from the core tidyverse packages, there are around 10 other packages
+
+---
+## Making our first plot
+
+Next we'll create a plot to show something about our `bigfoot` dataset. Today, we'll just run the code and see what happens. The next few sessions, you will be fluent with all the code below, but for now let's just get a taste.
+
+
+```r
+# Start by running this code that will focus in 
+# on the information that we are interested in
+bigfoot_focus &lt;- bigfoot %&gt;% 
+  mutate(year = lubridate::year(date)) %&gt;% 
+  group_by(year, season) %&gt;% 
+  summarize(number_of_sightings = n()) %&gt;% filter(year &gt;= 1960 &amp; season != "Unknown")
+  
+# Let's create an object that only holds observations 
+# for a specific state
+fav_season &lt;- bigfoot_focus %&gt;% 
+  filter(season == "Summer") 
+```
+
+---
+
+
+```r
+#The following code creates a somewhat complex plot.
+ggplot() + 
+  geom_point(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
+  geom_line(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
+  geom_point(data = fav_season, 
+             aes(x = year, y = number_of_sightings),
+             color = "red", size = 3) +
+  geom_line(data = fav_season, 
+             aes(x = year, y = number_of_sightings),
+             color = "red", size = 1) + 
+  theme_classic() + labs(y = "Number of Bigfoot Sightings", x = "Year of Sighting") 
+```
+
+&lt;img src="IntroR_Slides_files/figure-html/unnamed-chunk-36-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+What we have plotted is the Year of the sighting on the x-axis and the number of sightings on the y axis. 
+
+The red dot/line shows the season I was particularly interested in visualizing,  
+---
+# EXERCISE 4
+
+In the r chunk below, I have copied the code to make this plot. 
+
+1. Look in the code for where I have specified **filter(season == "Summer")** and change it to the season of your choice.
+
+2. Run the two lines of code to produce a new plot. 
+---
+
+```r
+fav_season &lt;- bigfoot_focus %&gt;% 
+  filter(season == "Summer")  ## Change this line ##
+
+ggplot() + 
+  geom_point(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
+  geom_line(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
+  geom_point(data = fav_season, 
+             aes(x = year, y = number_of_sightings),
+             color = "red", size = 3) +
+  geom_line(data = fav_season, 
+             aes(x = year, y = number_of_sightings),
+             color = "red", size = 1) + 
+  theme_classic() + labs(y = "Number of Bigfoot Sightings", x = "Year of Sighting") 
+```
+
+&lt;img src="IntroR_Slides_files/figure-html/unnamed-chunk-37-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+Does the season you specified show up as a red dot/line? If yes, great! If you could NOT get a plot to work, great! Let's work through it together. Is there an error message in the console? What does it say? What season were we trying to plot? How did you specify the season?
+
+-------------------------------------------------
+---
+# Additional useful tools
+
+```r
+# Alternative for Exercise 3-2 (Will see next workshop)
+bigfoot %&gt;% 
+  filter(state == "Virginia") %&gt;% 
+  summarize(count = n())
+```
+
+```
+##   count
+## 1    79
+```
+
+```r
+# You can also directly access cells in your dataframe by subsetting your data. 
+# The format is dataframe[row, column]. If you specify a row and no column, then a 
+# full row(s) will be returned. The opposite is true if a column is specified and 
+# not a row. If you specify both a row and column, than an individual cell(s) will 
+# be written out.
+bigfoot[1, ]
+```
+
+```
+##   title   state date season precip_type number
+## 1  &lt;NA&gt; Alabama &lt;NA&gt; Summer        &lt;NA&gt;  30680
+##   temperature dew_point humidity visibility uv_index
+## 1          NA        NA       NA         NA       NA
+```
+
+```r
+head(bigfoot[, 5])
+```
+
+```
+## [1] NA     NA     NA     NA     NA     "rain"
+```
+
+```r
+bigfoot[5, 6]
+```
+
+```
+## [1] 703
+```
+---
+
+```r
+# One other useful tool that acts like a + sign, but for character values are 
+# the paste or paste0 functions.
+head(paste0(bigfoot$state, ", ", bigfoot$date))
+```
+
+```
+## [1] "Alabama, NA"              "Alaska, NA"              
+## [3] "Rhode Island, 1974-09-20" "Pennsylvania, NA"        
+## [5] "Oregon, NA"               "Oklahoma, 1973-09-28"
+```
+
+```r
+# Finally, you can write out your dataset to a csv file using the write.csv or 
+#write_csv functions.
+write_csv(bigfoot, "bigfoot_edits.csv")
+```
+
+---
+# Further Resources
+
+## Learning more R
+
+- [R4DS](https://r4ds.had.co.nz/): R 4 Data Science - a free e-book with excellent, engaging exercises
+
+- [RStudio Primers](https://rstudio.cloud/learn/primers) Engaging online lessons to teach you introductory R skills
+
+- [RStudio's cheat sheets](https://www.rstudio.com/resources/cheatsheets/)
+
+- [Jenny Bryan's Stat 545 "Data wrangling, exploration, and analysis with R" course material](https://stat545.com/): An excellent resource for learning R, dplyr, and ggplot2
+---
+## Troubleshooting coding
+
+- Read package vignettes. For example, see the [introduction to dplyr](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html) vignette.
+
+- [Google it!](http://lmgtfy.com/?q=R+Error+in+library+there+is+no+package+called): Try Googling generalized versions of any error messages you get. That is, remove text that is specific to your problem (names of variables, paths, datasets, etc.). You'd be surprised how many other people have probably had the same problem and solved it.
+
+- [Stack Overflow](http://stackoverflow.com/questions/tagged/r): There are over 100,000 questions tagged with "R" on SO. [Here are the most popular ones, ranked by vote](https://stackoverflow.com/questions/tagged/r?sort=votes). Always search before asking, and make a [reproducible example](http://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example/5963610#5963610) if you want to get useful advice. This is a minimal example that allows others who are trying to help you to see the error themselves.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "3:2",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
