@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Chi Square</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.20/header-attrs.js"></script>
+    <link href="libs/xaringanExtra-extra-styles-0.2.6/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <link href="libs/tachyons-4.12.0/tachyons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer_2.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: left, middle, inverse, title-slide
+
+.title[
+# Chi Square
+]
+
+---
+
+
+
+
+
+
+
+# Setting it up
+
+We are going to use some power calculation packages, the tidyverse, and then the broom package.
+
+```r
+# install.packages("pwr")
+# install.packages("NHANES")
+library(pwr)
+library(tidyverse)
+library(broom)
+library(NHANES)
+```
+
+Today we are going to be looking at a dataset created looking at health outcomes. We are going to use this data to explore the relationship between Diabetes and other various categories. 
+
+We are first going to bring in the NHANES dataset
+
+
+```r
+set.seed(8380)
+# We only need to take about a tenth of the data here.
+nhanes &lt;- as_tibble(NHANES::NHANES) %&gt;% 
+  sample_frac(.1)
+```
+
+---
+# Working with Discrete Variables - Chi-Square
+
+Until now we've only discussed analyzing _continuous_ outcomes / dependent variables. We've tested for differences in means between two groups with t-tests and in these cases, the dependent variable, i.e., the outcome, or `\(Y\)` variable, was _continuous_. What if our outcome variable is _discrete_, e.g., "Yes/No", "Mutant/WT", "Case/Control", etc.? Here we use a different set of procedures for assessing significant associations.
+---
+## Contingency tables
+
+The [`xtabs()`](http://stat.ethz.ch/R-manual/R-patched/library/stats/html/xtabs.html) function is useful for creating contingency tables from categorical variables. Let's create some contingency tables, and assign the final one to an object called **`xt`**. After making the assignment, type the name of the object to view it.
+
+
+```r
+xtabs(~Diabetes+Gender, data=nhanes)
+```
+
+```
+##         Gender
+## Diabetes female male
+##      No     459  460
+##      Yes     33   36
+```
+
+```r
+xt &lt;- xtabs(~Diabetes+Gender, data=nhanes)
+xt
+```
+
+```
+##         Gender
+## Diabetes female male
+##      No     459  460
+##      Yes     33   36
+```
+---
+There are two useful functions, `addmargins()` and `prop.table()` that add more information or manipulate how the data is displayed. By default, `prop.table()` will divide the numbext  of observations in each cell by the total. But you may want to specify _which margin_ you want to get proportions over. Let's do this for the first (row) margin.
+
+
+```r
+# Add marginal totals
+addmargins(xt)
+```
+
+```
+##         Gender
+## Diabetes female male Sum
+##      No     459  460 919
+##      Yes     33   36  69
+##      Sum    492  496 988
+```
+
+```r
+# Get the proportional table
+prop.table(xt)
+```
+
+```
+##         Gender
+## Diabetes     female       male
+##      No  0.46457490 0.46558704
+##      Yes 0.03340081 0.03643725
+```
+
+```r
+#each cell divided by grand total
+# That isn't really what we want
+
+# Do this over the first (row) margin only.
+#?prop.table
+prop.table(xt, margin=1)
+```
+
+```
+##         Gender
+## Diabetes    female      male
+##      No  0.4994559 0.5005441
+##      Yes 0.4782609 0.5217391
+```
+
+Looks like we have a slighly higher proportion of males with Diabetes than females. But is this significant?
+---
+## Running a Chi-Square
+
+The chi-square test is used to assess the independence of these two factors. That is, if the null hypothesis that Gender and Diabetes are independent is true, the we would expect a proportionally equal number of females and male patients with and without Diabetes. Males seem to be at slightly higher chance to have Diabetes than females, but the difference is not statistically significant.
+
+
+```r
+chisq.test(xt)
+```
+
+```
+## 
+## 	Pearson's Chi-squared test with Yates' continuity correction
+## 
+## data:  xt
+## X-squared = 0.04613, df = 1, p-value = 0.8299
+```
+
+```r
+#Checking the assumptions
+chisq.test(xt)$expected #Expected &gt; 1
+```
+
+```
+##         Gender
+## Diabetes    female      male
+##      No  457.63968 461.36032
+##      Yes  34.36032  34.63968
+```
+
+```r
+xt
+```
+
+```
+##         Gender
+## Diabetes female male
+##      No     459  460
+##      Yes     33   36
+```
+---
+
+```r
+#Checking the Confidence intervals for proportions
+prop.test(x = c(37, 47), n = c(447 + 37, 455 + 47))
+```
+
+```
+## 
+## 	2-sample test for equality of proportions with continuity correction
+## 
+## data:  c(37, 47) out of c(447 + 37, 455 + 47)
+## X-squared = 0.72573, df = 1, p-value = 0.3943
+## alternative hypothesis: two.sided
+## 95 percent confidence interval:
+##  -0.05398955  0.01963112
+## sample estimates:
+##     prop 1     prop 2 
+## 0.07644628 0.09362550
+```
+---
+An alternative to the chi-square test is [Fisher's exact test](https://en.wikipedia.org/wiki/Fisher%27s_exact_test). Rather than relying on a critical value from a theoretical chi-square distribution, Fisher's exact test calculates the _exact_ probability of observing the contingency table as is. It's especially useful when there are very small _n_'s in one or more of the contingency table cells. Both the chi-square and Fisher's exact test give us p-values of approximately .39 and .36.
+
+
+```r
+fisher.test(xt)
+```
+
+```
+## 
+## 	Fisher's Exact Test for Count Data
+## 
+## data:  xt
+## p-value = 0.8032
+## alternative hypothesis: true odds ratio is not equal to 1
+## 95 percent confidence interval:
+##  0.6472185 1.8357602
+## sample estimates:
+## odds ratio 
+##   1.088427
+```
+---
+Let's create a different contingency table, this time looking at the relationship between Diabetes and BMI classification
+
+
+```r
+xt &lt;- xtabs(~Diabetes+BMI_WHO, data = nhanes)
+```
+
+Let's do the same thing as above, showing the proportion of patients with and without Diabetes in the different BMI classifications
+
+
+```r
+prop.table(xt, margin=1)
+```
+
+```
+##         BMI_WHO
+## Diabetes 12.0_18.5 18.5_to_24.9 25.0_to_29.9 30.0_plus
+##      No  0.1380471    0.3265993    0.2738496 0.2615039
+##      Yes 0.0000000    0.1764706    0.2794118 0.5441176
+```
+---
+Now, let's run a chi-square test for independence.
+
+
+```r
+chisq.test(xt)
+```
+
+```
+## 
+## 	Pearson's Chi-squared test
+## 
+## data:  xt
+## X-squared = 31.824, df = 3, p-value = 5.7e-07
+```
+
+```r
+chisq.test(xt, simulate.p.value = TRUE)
+```
+
+```
+## 
+## 	Pearson's Chi-squared test with simulated p-value (based on 2000
+## 	replicates)
+## 
+## data:  xt
+## X-squared = 31.824, df = NA, p-value = 0.0004998
+```
+
+The result is _highly_ significant. If you look at the help for [`?chisq.test`](https://stat.ethz.ch/R-manual/R-patched/library/stats/html/chisq.test.html) you'll see that displaying the test only shows you summary information, but other components can be accessed. For example, we can easily get the actual p-value, or the expected counts under the null hypothesis of independence.
+
+
+```r
+chisq.test(xt)$p.value
+```
+
+```
+## [1] 5.699742e-07
+```
+
+```r
+chisq.test(xt)$expected
+```
+
+```
+##         BMI_WHO
+## Diabetes  12.0_18.5 18.5_to_24.9 25.0_to_29.9 30.0_plus
+##      No  114.278415    281.51512    244.35141 250.85506
+##      Yes   8.721585     21.48488     18.64859  19.14494
+```
+---
+## Exercise
+
+1. What's the relationship between General Health(HealthGen) and whether or not someone has Diabetes?
+    - Create a contingency table with General Health in rows and Highly Rated status in columns.
+    - Show the proportions of patients in the separate General Health categories, separately for those with or without Diabetes.
+    - Is this relationship significant?
+
+
+---
+Checking values against a given proportion.
+
+
+```r
+nhanes %&gt;% filter(!is.na(Gender)) %&gt;% 
+  count(Gender)
+```
+
+```
+## # A tibble: 2 × 2
+##   Gender     n
+##   &lt;fct&gt;  &lt;int&gt;
+## 1 female   499
+## 2 male     501
+```
+
+```r
+nhanes %&gt;% select(Age)
+```
+
+```
+## # A tibble: 1,000 × 1
+##      Age
+##    &lt;int&gt;
+##  1    28
+##  2    80
+##  3    45
+##  4    63
+##  5    58
+##  6    56
+##  7    56
+##  8    76
+##  9    14
+## 10     1
+## # … with 990 more rows
+```
+
+```r
+nhanes$Age
+```
+
+```
+##    [1] 28 80 45 63 58 56 56 76 14  1 32 37 50  7  3 49 19 55  9 59 64  3 29 14
+##   [25] 43 32 33 10 50 13 34 55 44 78 48 70 72 76 63 37  2 64 41 56 39 37 31 20
+##   [49] 58  6  4 67 51 48 24 80 38  0 77 74 43 41 53  8 45 15 35 64 53 11 56 50
+##   [73] 23  8 13 54 26 65 42 28 35 32  0 26  8 16  3 59  9 11 16  3 22 41 42  7
+##   [97]  7 57 34 52 69 21 17 12 44 57 58 12 20 40  8 20 74 52 31 80 36 50 49 38
+##  [121] 30 53 22 43 62 43 19 60 60 29 74 20  3 27 43 41 48  6 77 80 55 41  1 58
+##  [145] 56 34 45 80 23 38  2 15  2 73 11 59 30  6  2 72 52 32 14 51 47  0 48 44
+##  [169]  9 41 74 39 63 65 57 31 17 15 44 36  4 63 29 45 50 20 27 55 28 57 54 31
+##  [193] 54 80 65 41  1 47 15 18 36 56 33 18 42 13 70 64 10 20  8  9 80 21 36 27
+##  [217] 38 20 43 40 23 47 14 73 18 24  3 25 27  6 30 40 30 14  5 19 50  0 34 28
+##  [241] 80 31 30 59 78 30 34 30 34 23 66 43 43 31 76 24 56 54  2 54 28 41 45 43
+##  [265] 57  6 46 19 51 71 45 62 52 62 74 21 50 56 25 23  7  4  1 39 23 43 67 38
+##  [289] 11 51 46 17 47 59 10 25 44 19 33 28 38 71 53 10 62 77 47 12 59 49 15 24
+##  [313] 26 53 51 12 54 39 13 25 25 42 70 49 12 22  8 52  8 14 80 77 56 34 57 41
+##  [337] 57 35 44 62 48 35 17 36 59 54  6 60 22 23 23 21 27 15 59 60 12 80  0 43
+##  [361] 62 14 15 15 36 79 49 13 31 31 61 50 45 60 28 36 72 15 54 70 61 28 46 48
+##  [385] 23 33  4 25 38  1 55  0 44 47 41 20 61 14 39 10 59 55  3 53 56  4 76 16
+##  [409] 57 43 68 30 74 56 23 70 15 43  3 64  0 61 68 23 20 56 40 22 20 21 32 42
+##  [433] 15 37 64 22 53 39 35 39 24 29 34 51 79 26 50  3 80 80 33 10 47 39 25 18
+##  [457] 66 51 40 60  5 68  8 25 16 40 57 80 22 50 51 55 62 64 66  5 61 47 51 28
+##  [481] 39 59 68 49 71 55 68  6 48 69 30 21 56 26 43 44 39 39 74  1 13 17 22 57
+##  [505]  4 17 51 22 71 57 36 18 49 60 48 44  7 38 29 66 40 41 22 32 43 31 75 26
+##  [529] 36 33 53 58 39 34 27 14 29 10 72  4 15 30 11 80 41  8 63 43 28 65 67 43
+##  [553] 51 46 15  9 51 53 13 17  5 42 18 46  4 19 27 54 43 48 20  1 48 70 20 65
+##  [577] 56 15 38 49 42  2  8 16 53  9 30 50 15 66 16  7 46 40 40 27 51 13 68 38
+##  [601] 29 46 37 63  5 68 24 20  6 59 52 22 51 61 56 64 54  7 40 19  7 40  4 23
+##  [625] 27  9 18 17 47 10 41 50 40 46  9 48 25 17 40 46 39 54 56 48 65  2 24 19
+##  [649] 20 26 17 45 43  3 61 68 40  0 55  5 68  6 12 43 20 37 51 40 27  7  0 60
+##  [673] 11 35 44 56 39 64 11 11 22 62  2 47 14 40 22  8 63 38 62 48  7 10 69  3
+##  [697] 51 78 22  2  7 48 16 34 55 58 65 80 53 15 34 70 43 52 38 18 27  9 40 14
+##  [721] 68 37 50  0  9 80 70 24 46 62 80  2 14 30 43 54 51 61 34 50  0 11 71  4
+##  [745] 61 34 20 49 69 30 56 13 32  1 14 15 14 17 15 13 39 15 58 56 14 11  9 16
+##  [769] 48 34 59  9  1  4 80 45  1  2 65 16 12 24 31 80 13 80 20 27 39 26 44 17
+##  [793] 80 45 39 54  8 25 16  4  2 26 52 25 44 80 36 56 25 40 16 55 44 41 30 44
+##  [817]  5 17 26 23 28 57 50 67  3 26 35  5  1 52 12 65 30 50 40 70 51 53 25 43
+##  [841] 30 16  2 60 60 60 43  2  3 67  9 17 28 63 14 63 68 58 72 64  5  5 70 17
+##  [865] 49 53 16 12 30 45 36 30 26  2 72 58  4 45 49 65 54  2 70 74 14 45 77 20
+##  [889] 54 48 80 17 28 38 66 63 23 18 62 60 66  6 17  3 14 16 57 10  9  3 29 43
+##  [913] 25 29  9 33 54 80 31 27 12 53 60 69 38 34 25 51 13  9 44 30 74 74 27 17
+##  [937] 58  2 50 39 21 12 60 20 16 39 54 50 11 19  4 22 19 51 44 16 13  7 30 54
+##  [961]  4 79 17 59  7 37 11 19 74 37 29 54 18 30 18 51 34 34 80 80 66 39 11 75
+##  [985] 14 30 39 80 25 58 25 41 19 65  7 29 54 39  0 22
+```
+
+```r
+mean(nhanes$BMI)
+```
+
+```
+## [1] NA
+```
+
+```r
+chisq.test(x = c(489, 511), p = c(.5,.5))
+```
+
+```
+## 
+## 	Chi-squared test for given probabilities
+## 
+## data:  c(489, 511)
+## X-squared = 0.484, df = 1, p-value = 0.4866
+```
+
+```r
+chisq.test(x = c(489, 511), p = c(.7,.3))
+```
+
+```
+## 
+## 	Chi-squared test for given probabilities
+## 
+## data:  c(489, 511)
+## X-squared = 212, df = 1, p-value &lt; 2.2e-16
+```
+
+```r
+# DRAWS MULTIPLE TIMES INSTEAD OF JUST A SINGLE DRAW
+chisq.test(x = c(489, 511), p = c(.7,.3), simulate.p.value = TRUE) 
+```
+
+```
+## 
+## 	Chi-squared test for given probabilities with simulated p-value (based
+## 	on 2000 replicates)
+## 
+## data:  c(489, 511)
+## X-squared = 212, df = NA, p-value = 0.0004998
+```
+
+```r
+chisq.test(x = c(489, 511), p = c(.7,.3))$expected
+```
+
+```
+## [1] 700 300
+```
+
+```r
+nhanes %&gt;% filter(!is.na(BMI_WHO)) %&gt;% count(BMI_WHO)
+```
+
+```
+## # A tibble: 4 × 2
+##   BMI_WHO          n
+##   &lt;fct&gt;        &lt;int&gt;
+## 1 12.0_18.5      123
+## 2 18.5_to_24.9   303
+## 3 25.0_to_29.9   263
+## 4 30.0_plus      270
+```
+
+```r
+chisq.test(x = c(134, 274, 280, 273), p = c(.25,.25, .25, .25))
+```
+
+```
+## 
+## 	Chi-squared test for given probabilities
+## 
+## data:  c(134, 274, 280, 273)
+## X-squared = 62.771, df = 3, p-value = 1.503e-13
+```
+
+```r
+chisq.test(x = c(134, 274, 280, 273), p = c(.25,.25, .25, .25))$expected
+```
+
+```
+## [1] 240.25 240.25 240.25 240.25
+```
+---
+
+# Calculating Power, Sample Size, and Effect Size
+
+`pwr.chisq.test(w = NULL, N = NULL, df = NULL, sig.level = 0.05, power = NULL)`
+
+Where,
+
+-   w = Effect size
+-   N = Total Number of Observations
+-   df = degrees of freedom
+-   sig.level = Significance level (Generally .05)
+-   power = Power of test (Generally .80)
+
+Effect size for a chi-square contingency table test is defined as the chi-square value/statistic divided by the number of observations and square rooting that value.
+
+`\(sqrt(X^2/n)\)`, the magnitude of the effect can be estimated using the guide below:
+
+-   small effect: w = 0.10
+-   medium effect: w = 0.30
+-   large effect: w = 0.50
+
+Odds Ratios are another way of showing an effect size, but we will show these in a later class.
+---
+## Calculating Power, Sample Size, and Effect Size Example
+
+We are hoping to determine whether patients in Group A develop Diabetes more or less than those in Group B. Previous studies have been conducted in a similar manner as this and we will use the previous work as input for our sample size.  
+
+We start by assuming that we will be able to have access to 75 patients total. Previous research has shown that a medium effect should be expected. What power can we expect with our study? 
+
+Remember, `df = (r - 1) * (k - 1)) = (2-1)*(2-1) = 1`
+
+
+```r
+pwr.chisq.test(w = .3, N = 75, df = 1, sig.level = .05)
+```
+
+```
+## 
+##      Chi squared power calculation 
+## 
+##               w = 0.3
+##               N = 75
+##              df = 1
+##       sig.level = 0.05
+##           power = 0.7383023
+## 
+## NOTE: N is the number of observations
+```
+
+```r
+#power = .738
+```
+---
+What sample size would it take to reach a power of .8?
+
+
+```r
+pwr.chisq.test(w = .3, df = 1, sig.level = .05, power = .8)
+```
+
+```
+## 
+##      Chi squared power calculation 
+## 
+##               w = 0.3
+##               N = 87.20954
+##              df = 1
+##       sig.level = 0.05
+##           power = 0.8
+## 
+## NOTE: N is the number of observations
+```
+
+```r
+# N = 87.21, we need 12 more patients.
+```
+---
+A researcher wanted to modify our experiment and add two more groups and also wanted to change the categories to Diabetic, Pre-Diabetic, and non-Diabetic. 
+
+First, let us see how changing the number of groups changes the power calculation.
+`df = (4-1) * (3-1) = 6`
+
+
+```r
+pwr.chisq.test(w = .3, N = 75, df = 6, sig.level = .05)
+```
+
+```
+## 
+##      Chi squared power calculation 
+## 
+##               w = 0.3
+##               N = 75
+##              df = 6
+##       sig.level = 0.05
+##           power = 0.4519989
+## 
+## NOTE: N is the number of observations
+```
+
+```r
+#power = .45 (Much lower)
+```
+
+What sample size would it take to reach a power of .8?
+
+
+```r
+pwr.chisq.test(w = .3, df = 6, sig.level = .05, power = .8)
+```
+
+```
+## 
+##      Chi squared power calculation 
+## 
+##               w = 0.3
+##               N = 151.381
+##              df = 6
+##       sig.level = 0.05
+##           power = 0.8
+## 
+## NOTE: N is the number of observations
+```
+
+```r
+# N = 151.38, we need 76 more patients.
+```
+
+As you see, adding additional groups to the experiment calls for more patients. 
+---
+Let us take a look at the relationship between effect size, power, sample size, and degrees of freedom.
+
+
+```r
+df &lt;- seq(1, 7, 2)
+es &lt;- seq(.1, .5, .2)
+N &lt;- seq(20, 200, 20)
+
+vals &lt;- expand.grid(df = df, es = es, 
+                    N = N)
+
+vals$power &lt;- pwr.chisq.test(w = vals$es, N = vals$N, df = vals$df)$power 
+  
+vals %&gt;% 
+  ggplot(aes(N, power, color = as.factor(df))) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(aes(yintercept = .8)) +
+  facet_wrap(~es)
+```
+
+&lt;img src="ChiSquare_slides_files/figure-html/unnamed-chunk-18-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+
+To maintain the same power levels while adding groups, you also need to add extra observations/patients.
+---
+# Using the `forcats` package to work with categorical variables
+
+When looking at Chi Square tests, often we have to find ways to work with and manipulate categorical variables. This can be difficult at times. Fortunately, in R we can use both the mutate function and the `forcats` package (from `tidyverse`) to create meaningful categories and levels.
+
+"R represents categorical data with factors. A factor is an integer vector with a levels attribute that stores a set of mappings between integers and categorical values. When you view a factor, R displays not the integers, but the levels associated with them"
+
+
+```r
+names(nhanes)
+```
+
+```
+##  [1] "ID"               "SurveyYr"         "Gender"           "Age"             
+##  [5] "AgeDecade"        "AgeMonths"        "Race1"            "Race3"           
+##  [9] "Education"        "MaritalStatus"    "HHIncome"         "HHIncomeMid"     
+## [13] "Poverty"          "HomeRooms"        "HomeOwn"          "Work"            
+## [17] "Weight"           "Length"           "HeadCirc"         "Height"          
+## [21] "BMI"              "BMICatUnder20yrs" "BMI_WHO"          "Pulse"           
+## [25] "BPSysAve"         "BPDiaAve"         "BPSys1"           "BPDia1"          
+## [29] "BPSys2"           "BPDia2"           "BPSys3"           "BPDia3"          
+## [33] "Testosterone"     "DirectChol"       "TotChol"          "UrineVol1"       
+## [37] "UrineFlow1"       "UrineVol2"        "UrineFlow2"       "Diabetes"        
+## [41] "DiabetesAge"      "HealthGen"        "DaysPhysHlthBad"  "DaysMentHlthBad" 
+## [45] "LittleInterest"   "Depressed"        "nPregnancies"     "nBabies"         
+## [49] "Age1stBaby"       "SleepHrsNight"    "SleepTrouble"     "PhysActive"      
+## [53] "PhysActiveDays"   "TVHrsDay"         "CompHrsDay"       "TVHrsDayChild"   
+## [57] "CompHrsDayChild"  "Alcohol12PlusYr"  "AlcoholDay"       "AlcoholYear"     
+## [61] "SmokeNow"         "Smoke100"         "Smoke100n"        "SmokeAge"        
+## [65] "Marijuana"        "AgeFirstMarij"    "RegularMarij"     "AgeRegMarij"     
+## [69] "HardDrugs"        "SexEver"          "SexAge"           "SexNumPartnLife" 
+## [73] "SexNumPartYear"   "SameSex"          "SexOrientation"   "PregnantNow"
+```
+---
+Let us look at the `BMI_WHO` category
+
+
+```r
+fct_count(nhanes$BMI_WHO)
+```
+
+```
+## # A tibble: 5 × 2
+##   f                n
+##   &lt;fct&gt;        &lt;int&gt;
+## 1 12.0_18.5      123
+## 2 18.5_to_24.9   303
+## 3 25.0_to_29.9   263
+## 4 30.0_plus      270
+## 5 &lt;NA&gt;            41
+```
+
+```r
+fct_unique(nhanes$BMI_WHO)
+```
+
+```
+## [1] 12.0_18.5    18.5_to_24.9 25.0_to_29.9 30.0_plus   
+## Levels: 12.0_18.5 18.5_to_24.9 25.0_to_29.9 30.0_plus
+```
+
+Looking at that we see that we have 4 different levels, 12.0 - 18.5, 18.5 - 24.9, 25 - 29.9, and 30.0+. These may be useful categories, but what if I only wanted two levels for this category 12.0 - 24.9 &amp; 25 to 30+. To do this, we can use the handy feature `fct_collapse`
+
+
+```r
+#?fct_collapse
+nhanes %&gt;% 
+mutate(BMI_WHO_new = fct_collapse(BMI_WHO, under25 = c("12.0_18.5", "18.5_to_24.9"), over25 = c("25.0_to_29.9", "30.0_plus"))) %&gt;% 
+  count(BMI_WHO_new)
+```
+
+```
+## # A tibble: 3 × 2
+##   BMI_WHO_new     n
+##   &lt;fct&gt;       &lt;int&gt;
+## 1 under25       426
+## 2 over25        533
+## 3 &lt;NA&gt;           41
+```
+---
+As you can see, we now have two levels (+ missing) that we can now explore. I could have also done this using the `case_when` function
+
+Another issue that comes up often when dealing with categorical variables are low numbers in specific categories, which can often be an issue. Let us look at the `TVHrsDay` variable which looks at the number of hours per day a patient watches tv. Using the `fct_lump_min` function we can lump together all category levels that have below the minimum number of observations.
+
+
+```r
+nhanes %&gt;% count(TVHrsDay)
+```
+
+```
+## # A tibble: 8 × 2
+##   TVHrsDay      n
+##   &lt;fct&gt;     &lt;int&gt;
+## 1 0_hrs        11
+## 2 0_to_1_hr    59
+## 3 1_hr         95
+## 4 2_hr        125
+## 5 3_hr         80
+## 6 4_hr         48
+## 7 More_4_hr    72
+## 8 &lt;NA&gt;        510
+```
+
+```r
+fct_lump_min(nhanes$TVHrsDay, min = 60) %&gt;% fct_count()
+```
+
+```
+## # A tibble: 6 × 2
+##   f             n
+##   &lt;fct&gt;     &lt;int&gt;
+## 1 1_hr         95
+## 2 2_hr        125
+## 3 3_hr         80
+## 4 More_4_hr    72
+## 5 Other       118
+## 6 &lt;NA&gt;        510
+```
+---
+This may not be ideal in this instance, but there are times when you might want to get rid of low levels of observations. 
+
+Oftentimes when looking at categorical variables, they are organized in a ABC order, which isn't usually the best case. For instance, let us look at the following bar chart.
+
+
+```r
+nhanes %&gt;% 
+  ggplot(aes(Race1)) +
+  geom_bar() 
+```
+
+&lt;img src="ChiSquare_slides_files/figure-html/unnamed-chunk-23-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+---
+As you can see, this is in alphabetical order, but I would probably want it to go in order of the number of observations. To do this, I can either use the `fct_reorder` function or the `fct_infreq` function.
+
+
+```r
+nhanes %&gt;% 
+  mutate(Race1 = fct_infreq(Race1)) %&gt;% 
+  ggplot(aes(Race1)) +
+  geom_bar() 
+```
+
+&lt;img src="ChiSquare_slides_files/figure-html/unnamed-chunk-24-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+---
+Finally, if you want to relevel your factor variables manually you can use the `fct_relevel` function. This allows you to set the levels of your factors by hand.
+
+
+```r
+nhanes %&gt;% 
+  mutate(Race1 = fct_relevel(Race1, levels = c("Other", "Mexican", "Hispanic", "Black", "White"))) %&gt;% 
+  ggplot(aes(Race1)) +
+  geom_bar() 
+```
+
+&lt;img src="ChiSquare_slides_files/figure-html/unnamed-chunk-25-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "3:2",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
