@@ -3,7 +3,7 @@
   <head>
     <title>Introduction to R</title>
     <meta charset="utf-8" />
-    <script src="libs/header-attrs-2.19/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.20/header-attrs.js"></script>
     <link href="libs/xaringanExtra-extra-styles-0.2.6/xaringanExtra-extra-styles.css" rel="stylesheet" />
     <link href="libs/tachyons-4.12.0/tachyons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="xaringan-themer_2.css" type="text/css" />
@@ -59,12 +59,12 @@ The first thing we are going to do is read in data from a csv file. We are initi
 
 
 ```r
-bigfoot &lt;- read.csv("bigfoot.csv")
+rodents &lt;- read.csv("desert_rodents.csv")
 ```
 
 ---
 
-Looking at our environment window, we can see that the `bigfoot` dataset has been created. By looking in our console at the bottom, we can see a record of the code that has been run. 
+Looking at our environment window, we can see that the `rodents` dataset has been created. By looking in our console at the bottom, we can see a record of the code that has been run.  
 
 The goal today will be to become familiar with coding concepts in R and develop proficiency reading, writing, and running code in the RStudio environment. 
 
@@ -77,7 +77,7 @@ To `View()` the dataset in spreadsheet form, we can click on the dataset's name 
 
 ```r
 #Use the View function to investigate your dataset.
-# View(bigfoot)
+# View(rodents)
 ```
 
 In the r chunk above, I have written my first code comment. Anything after a `#` sign is a comment. Use them liberally to *comment your code* to explain to yourself and others what the code is doing and why you have chosen to do it this way.
@@ -95,7 +95,7 @@ We use it in R to create new objects.
 
 So far in our coding today, we have used the arrow operator once already, resulting in 1 object in our environment:
 
-1. We created our first object, `bigfoot`, when we read in our data from the csv file
+1. We created our first object, `rodents`, when we read in our data from the csv file
 
 Let's use the arrow to create a few more R objects. First, let's create an object containing one value.
 
@@ -122,6 +122,7 @@ object1
 ```
 
 ---
+
 We can overwrite the value of object1 by re-assigning it
 
 
@@ -139,7 +140,6 @@ object1
 Now is a great time to save our script. Go to File --&gt; Save or `CTRL+S` (pc) or `CMD+S` (mac).
 
 Where is the file saving? Because I set up a project file at the beginning, your file is saving inside that folder. For your own work, I would suggest creating projects to make data/file management much easier.
-
 ---
 
 ## Functions
@@ -153,7 +153,7 @@ Sys.Date() #get today's date
 ```
 
 ```
-## [1] "2023-01-24"
+## [1] "2023-08-15"
 ```
 
 Some functions just take a single argument (like the `View` function). Let's get the square root of 961. Now let's get the square root of object1
@@ -182,7 +182,6 @@ To learn more about the function, type `?` and then the function's name
 #?sqrt
 ```
 ---
-
 Sometimes functions have arguments that have a default value. In those cases, you can override the default value by specifying your own.
 
 For example, let's look at the help page for the `rnorm()` function
@@ -199,9 +198,9 @@ rnorm(n = 10)
 ```
 
 ```
-##  [1]  1.2297611 -0.2305227 -0.2425357  0.9978830
-##  [5]  0.3597447 -0.2868646  0.9150062 -0.4378940
-##  [9] -0.4479837  0.9733321
+##  [1]  1.5677977 -1.3289683 -0.2848614  0.6154963
+##  [5] -0.5891099  0.2293658  2.1226115  1.0617796
+##  [9]  1.1678347  0.5938621
 ```
 
 ```r
@@ -209,8 +208,8 @@ rnorm(n = 10, mean = 50, sd = 5)
 ```
 
 ```
-##  [1] 48.17598 47.77450 60.54048 42.92877 48.15879
-##  [6] 56.77461 47.82795 49.63048 48.41252 53.66766
+##  [1] 62.17508 50.61246 51.01743 53.16955 55.10925
+##  [6] 52.25807 53.53885 56.15563 55.25824 52.44250
 ```
 
 ```r
@@ -227,8 +226,8 @@ rnorm(10, 50, 5)
 ```
 
 ```
-##  [1] 57.25518 46.79578 45.45774 40.36274 49.72871
-##  [6] 55.18572 46.56540 58.42975 52.34334 48.75174
+##  [1] 45.92444 57.20674 47.75586 65.10925 46.88247
+##  [6] 63.11250 52.93775 62.29965 55.82472 43.84779
 ```
 
 ```r
@@ -237,8 +236,8 @@ rnorm(n = 10, sd = 5, mean = 50)
 ```
 
 ```
-##  [1] 38.25601 46.80673 55.16144 46.01722 51.20276
-##  [6] 54.90432 47.88097 49.03688 50.88509 40.24770
+##  [1] 46.23544 49.09376 47.88863 49.53665 41.61321
+##  [6] 43.14516 60.13119 51.37929 57.23347 43.18670
 ```
 
 To improve readability (and accuracy) of your code, we would recommend labeling your arguments.
@@ -258,7 +257,6 @@ hist(object2)
 
 &lt;img src="IntroR_Slides_files/figure-html/unnamed-chunk-12-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
 
-------------------------------------
 ---
 
 Look at the environment. What does it tell you about object2?
@@ -343,8 +341,56 @@ Try the following functions on object3 and on object4. What do each of the below
 4. str()
 
 
+```r
+class(object3); class(object4) 
+```
 
----------------------
+```
+## [1] "numeric"
+```
+
+```
+## [1] "character"
+```
+
+```r
+length(object3); length(object4) 
+```
+
+```
+## [1] 4
+```
+
+```
+## [1] 3
+```
+
+```r
+summary(object3); summary(object4) 
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    35.0    50.0    57.5    55.0    62.5    70.0
+```
+
+```
+##    Length     Class      Mode 
+##         3 character character
+```
+
+```r
+str(object3); str(object4) 
+```
+
+```
+##  num [1:4] 55 60 35 70
+```
+
+```
+##  chr [1:3] "Ash" "Ollie" "Cal"
+```
+
 ---
 ### Functions to inspect dataframes
 
@@ -358,34 +404,33 @@ Let's remind ourselves how to look at the whole dataset. Does anyone remember fr
 
 
 ```r
-#View(bigfoot)
+#View(rodents)
 ```
 
-
-We can also directly call the `dim()` function to see the dimensions of the `bigfoot` dataset.
+We can also directly call the `dim()` function to see the dimensions of the `rodents` dataset.
 
 
 ```r
-dim(bigfoot) #rows then columns
+dim(rodents) #rows then columns
 ```
 
 ```
-## [1] 5021   11
+## [1] 21 11
 ```
 
 We can ask for the number of rows and the number of columns
 
 
 ```r
-nrow(bigfoot)
+nrow(rodents)
 ```
 
 ```
-## [1] 5021
+## [1] 21
 ```
 
 ```r
-ncol(bigfoot)
+ncol(rodents)
 ```
 
 ```
@@ -397,85 +442,77 @@ To see all the column headings we can call the function `names()`
 
 
 ```r
-names(bigfoot)
+names(rodents)
 ```
 
 ```
-##  [1] "title"       "state"       "date"       
-##  [4] "season"      "precip_type" "number"     
-##  [7] "temperature" "dew_point"   "humidity"   
-## [10] "visibility"  "uv_index"
+##  [1] "species"        "scientificname" "commonname"    
+##  [4] "granivore"      "minhfl"         "meanhfl"       
+##  [7] "maxhfl"         "minwgt"         "meanwgt"       
+## [10] "maxwgt"         "juvwgt"
 ```
-
 
 And probably the two you'll use the most to inspect data frames, because they are the most descriptive, are `summary()` and `str()`, both of which we used above to inspect vectors
 
 
 ```r
-summary(bigfoot)
+summary(rodents)
 ```
 
 ```
-##     title              state          
-##  Length:5021        Length:5021       
+##    species          scientificname    
+##  Length:21          Length:21         
 ##  Class :character   Class :character  
 ##  Mode  :character   Mode  :character  
 ##                                       
 ##                                       
 ##                                       
 ##                                       
-##      date              season         
-##  Length:5021        Length:5021       
-##  Class :character   Class :character  
-##  Mode  :character   Mode  :character  
-##                                       
-##                                       
-##                                       
-##                                       
-##  precip_type            number       temperature    
-##  Length:5021        Min.   :   60   Min.   :-8.455  
-##  Class :character   1st Qu.: 4595   1st Qu.:46.767  
-##  Mode  :character   Median :15473   Median :59.360  
-##                     Mean   :21520   Mean   :57.843  
-##                     3rd Qu.:33979   3rd Qu.:70.380  
-##                     Max.   :71997   Max.   :94.030  
-##                                     NA's   :1835    
-##    dew_point         humidity        visibility    
-##  Min.   :-11.21   Min.   :0.0800   Min.   : 0.740  
-##  1st Qu.: 34.77   1st Qu.:0.6200   1st Qu.: 7.660  
-##  Median : 46.69   Median :0.7300   Median : 9.451  
-##  Mean   : 46.23   Mean   :0.7057   Mean   : 8.492  
-##  3rd Qu.: 59.00   3rd Qu.:0.8200   3rd Qu.:10.000  
-##  Max.   : 77.40   Max.   :1.0000   Max.   :10.000  
-##  NA's   :1648     NA's   :1648     NA's   :1972    
-##     uv_index     
-##  Min.   : 0.000  
-##  1st Qu.: 3.000  
-##  Median : 5.000  
-##  Mean   : 5.161  
-##  3rd Qu.: 8.000  
-##  Max.   :13.000  
-##  NA's   :1629
+##   commonname          granivore          minhfl    
+##  Length:21          Min.   :0.0000   Min.   : 6.0  
+##  Class :character   1st Qu.:0.0000   1st Qu.:11.0  
+##  Mode  :character   Median :1.0000   Median :15.0  
+##                     Mean   :0.7143   Mean   :15.1  
+##                     3rd Qu.:1.0000   3rd Qu.:19.0  
+##                     Max.   :1.0000   Max.   :39.0  
+##                                                    
+##     meanhfl          maxhfl          minwgt     
+##  Min.   :13.25   Min.   :15.00   Min.   : 4.00  
+##  1st Qu.:19.95   1st Qu.:23.00   1st Qu.: 6.00  
+##  Median :21.48   Median :31.00   Median : 9.00  
+##  Mean   :24.17   Mean   :33.57   Mean   :10.24  
+##  3rd Qu.:26.03   3rd Qu.:39.00   3rd Qu.:13.00  
+##  Max.   :49.93   Max.   :64.00   Max.   :30.00  
+##                                                 
+##     meanwgt           maxwgt           juvwgt      
+##  Min.   :  7.90   Min.   : 16.00   Min.   : 5.867  
+##  1st Qu.: 17.47   1st Qu.: 28.00   1st Qu.:13.203  
+##  Median : 24.06   Median : 48.00   Median :18.714  
+##  Mean   : 40.92   Mean   : 79.29   Mean   :26.336  
+##  3rd Qu.: 49.04   3rd Qu.: 85.00   3rd Qu.:28.701  
+##  Max.   :162.53   Max.   :280.00   Max.   :83.752  
+##                                    NA's   :3
 ```
 
 ```r
-str(bigfoot)
+str(rodents)
 ```
 
 ```
-## 'data.frame':	5021 obs. of  11 variables:
-##  $ title      : chr  NA NA "Report 6496: Bicycling student has night encounter" NA ...
-##  $ state      : chr  "Alabama" "Alaska" "Rhode Island" "Pennsylvania" ...
-##  $ date       : chr  NA NA "1974-09-20" NA ...
-##  $ season     : chr  "Summer" "Fall" "Fall" "Summer" ...
-##  $ precip_type: chr  NA NA NA NA ...
-##  $ number     : int  30680 1261 6496 8000 703 9765 4983 31940 5692 438 ...
-##  $ temperature: num  NA NA 73.4 NA NA ...
-##  $ dew_point  : num  NA NA 65.7 NA NA ...
-##  $ humidity   : num  NA NA 0.86 NA NA 0.79 NA 0.68 0.45 NA ...
-##  $ visibility : num  NA NA 2.75 NA NA ...
-##  $ uv_index   : int  NA NA 4 NA NA 7 NA 8 8 NA ...
+## 'data.frame':	21 obs. of  11 variables:
+##  $ species       : chr  "BA" "PB" "PH" "PI" ...
+##  $ scientificname: chr  "Baiomys taylori" "Chaetodipus baileyi" "Chaetodipus hispidus" "Chaetodipus intermedius" ...
+##  $ commonname    : chr  "Northern pygmy mouse" "Bailey's pocket mouse" "Hispid pocket mouse" "Rock pocket mouse" ...
+##  $ granivore     : int  1 1 1 1 1 1 1 1 0 0 ...
+##  $ minhfl        : int  6 16 21 18 11 21 15 39 21 12 ...
+##  $ meanhfl       : num  13.3 26 25.1 22 21.5 ...
+##  $ maxhfl        : int  15 47 28 24 27 50 64 58 42 39 ...
+##  $ minwgt        : int  6 10 18 10 4 13 12 12 30 7 ...
+##  $ meanwgt       : num  9.45 31.87 30.72 17.47 17.62 ...
+##  $ maxwgt        : int  18 79 48 28 42 66 85 190 280 56 ...
+##  $ juvwgt        : num  NA 19 24 10 11.7 ...
 ```
+
 ---
 ## Accessing variables from a dataframes
 
@@ -486,28 +523,25 @@ Let's look at the title column
 
 
 ```r
-bigfoot$title
+rodents$commonname
 ```
 
-That function calls the whole column, which is 5021 observations long. Usually printing out a long vector or column to the console is not useful.
+That function calls the whole column, which is 21 observations long. Usually printing out a long vector or column to the console is not useful.
 
 `head()` is a function allowing us to look at just the first 6 entries
 
 
 ```r
-head(bigfoot$title)
+head(rodents$commonname)
 ```
 
 ```
-## [1] NA                                                                          
-## [2] NA                                                                          
-## [3] "Report 6496: Bicycling student has night encounter"                        
-## [4] NA                                                                          
-## [5] NA                                                                          
-## [6] "Report 9765: Motorist and children have daylight sighting near Burns Flat."
+## [1] "Northern pygmy mouse"   "Bailey's pocket mouse" 
+## [3] "Hispid pocket mouse"    "Rock pocket mouse"     
+## [5] "Desert pocket mouse"    "Merriam's kangaroo rat"
 ```
 ---
-What if we want to see the first 20 values? 
+What if we want to see the first 10 values? 
 
 Let's see if we can find out by calling help on the `head()` function
 
@@ -522,30 +556,20 @@ Let's try adding the `n = ` argument to `head()`
 
 
 ```r
-head(bigfoot$title, n = 20)
+head(rodents$commonname, n = 10)
 ```
 
 ```
-##  [1] NA                                                                                                                                          
-##  [2] NA                                                                                                                                          
-##  [3] "Report 6496: Bicycling student has night encounter"                                                                                        
-##  [4] NA                                                                                                                                          
-##  [5] NA                                                                                                                                          
-##  [6] "Report 9765: Motorist and children have daylight sighting near Burns Flat."                                                                
-##  [7] "Report 4983: Sighting and vocalizations at a home in Wayne National Forest"                                                                
-##  [8] "Report 31940: Fishermen and Law Enforcement Officer Report Three Class A Sightings in Same Area Within a Year near the town of Somers"     
-##  [9] "Report 5692: Father and son hear vocalizations on Peavine Mt"                                                                              
-## [10] NA                                                                                                                                          
-## [11] "Report 55269: Dawn sighting at Stevens Brook outside Claremont"                                                                            
-## [12] "Report 59757: Possible daylight sighting of a Sasquatch on the Omaha Indian Reservation"                                                   
-## [13] "Report 751: Hunter describes described being stalked near Minot"                                                                           
-## [14] "Report 3339: Deep impressions seen in the snow"                                                                                            
-## [15] "Report 47215: Female fly fisherman's lucid recollection of classic territorial intimidation behavior of Saquatches ; 6mi NE of Mystic Lake"
-## [16] "Report 1757: Two separate sets of large footprints found"                                                                                  
-## [17] "Report 25662: Hiker spots a bigfoot in the mountains east of Butte"                                                                        
-## [18] "Report 30860: Daylight sighting by camper at Black Mountain Campground near Blue Ridge Parkway"                                            
-## [19] "Report 13276: Motorist has nightime sighting near Harmony"                                                                                 
-## [20] "Report 17550: Nighttime sighting by motorist near Mansfield"
+##  [1] "Northern pygmy mouse"      
+##  [2] "Bailey's pocket mouse"     
+##  [3] "Hispid pocket mouse"       
+##  [4] "Rock pocket mouse"         
+##  [5] "Desert pocket mouse"       
+##  [6] "Merriam's kangaroo rat"    
+##  [7] "Ord's kangaroo rat"        
+##  [8] "Banner-tailed kangaroo rat"
+##  [9] "White-throated woodrat"    
+## [10] "Northern Grasshopper Mouse"
 ```
 ---
 Although we can specify the head function without naming the arguments, it is good practice to label the arguments to clarify what the code is doing. However, it is conventional to skip labeling the first argument, x, since its label is easily assumed.
@@ -554,41 +578,31 @@ You may have read in the help menu that `head()` has a companion function `tail(
 
 
 ```r
-tail(bigfoot$title, n = 20)
+tail(rodents$commonname, n = 10)
 ```
 
 ```
-##  [1] "Report 2363: Late night sighting by motorists along Highway 121"                                                       
-##  [2] "Report 48811: Four-wheeler riders are observed by a tall white biped at dusk near Philpot"                             
-##  [3] NA                                                                                                                      
-##  [4] "Report 37750: Possible encounters on a farm near Dry Ridge"                                                            
-##  [5] "Report 35456: Possible knocks, vocalizations and footprints found outside a home near Leitchfield"                     
-##  [6] "Report 16896: Possible sasquatch seen squatting in a road near Flatwoods"                                              
-##  [7] "Report 1265: Sighting of 8-foot tall, upright creature"                                                                
-##  [8] "Report 30596: Ginseng hunter recalls being terrified by a nighttime visitor on old mining property at the KY/VA border"
-##  [9] "Report 40278: Hunter in a ghillie suit on Pine Mountain has a close encounter"                                         
-## [10] "Report 25257: ATV riders find possible tracks outside Evarts"                                                          
-## [11] "Report 38980: Teen on four-wheeler has sighting on family property near Wallins"                                       
-## [12] "Report 1045: Father and son have a daylight encounter while deer hunting near Lawrenceburg"                            
-## [13] "Report 33187: Dual sighting in late afternoon by deer hunter in tree stand near Lawrenceburg"                          
-## [14] NA                                                                                                                      
-## [15] "Report 22941: Man tells of Grandmother's encounters with shaggy white creature near Scottsville"                       
-## [16] NA                                                                                                                      
-## [17] NA                                                                                                                      
-## [18] NA                                                                                                                      
-## [19] NA                                                                                                                      
-## [20] NA
+##  [1] "Silky pocket mouse"      
+##  [2] "Cactus mouse"            
+##  [3] "White-footed mouse"      
+##  [4] "Deer Mouse"              
+##  [5] "Fulvous harvest mouse"   
+##  [6] "Western harvest mouse"   
+##  [7] "Plains harvest mouse"    
+##  [8] "Tawny-bellied cotton rat"
+##  [9] "Hispid cotton rat"       
+## [10] "Yellow nosed cotton rat"
 ```
 ---
-Let's calculate some descriptive statistics for the temperature of bigfoot sighting using the `temperature` variable
+Let's calculate some descriptive statistics for the mean weight for a species using the `meanwgt` variable
 
 
 ```r
-mean(bigfoot$temperature)
+mean(rodents$meanwgt)
 ```
 
 ```
-## [1] NA
+## [1] 40.92359
 ```
 
 For variables where there are missings, we will need to include an argument that removes the missings. 
@@ -601,84 +615,61 @@ For variables where there are missings, we will need to include an argument that
 Looking at the arguments section tells me that the argument I need to include is `na.rm = TRUE`
 
 ```r
-mean(bigfoot$temperature, na.rm = TRUE)
+mean(rodents$juvwgt)
 ```
 
 ```
-## [1] 57.84338
+## [1] NA
 ```
 
 ```r
-sd(bigfoot$temperature, na.rm = TRUE)
+mean(rodents$juvwgt, na.rm = TRUE)
 ```
 
 ```
-## [1] 16.39659
+## [1] 26.33586
 ```
+
+```r
+sd(rodents$juvwgt, na.rm = TRUE)
+```
+
+```
+## [1] 21.91689
+```
+
 ---
 # EXERCISE 3
 
-1. What's the standard deviation for humidity (`humidity`)?
-2. Use the `table()` function and the `state` variable to find out how many observations are from Virginia 
-3. What's the maximum temperature for a bigfoot sighting (hint: `max()`)?
+1. What's the standard deviation for minimum weight (`minwgt`)?
+2. Use the `sum()` function and the `granivore` variable to count how many rodents are granivores (feed on grain)
+3. What's the maximum mean hindfoot length (`meanhfl`) for a rodents species in this dataset (hint: `max()`)?
 
 
 ```r
-sd(bigfoot$humidity, na.rm = TRUE)
+sd(rodents$minwgt, na.rm = TRUE)
 ```
 
 ```
-## [1] 0.1606262
+## [1] 6.147396
 ```
 
 ```r
-table(bigfoot$state)
+table(rodents$granivore)
 ```
 
 ```
 ## 
-##        Alabama         Alaska        Arizona 
-##             94             20             85 
-##       Arkansas     California       Colorado 
-##            101            417            127 
-##    Connecticut       Delaware        Florida 
-##             18              5            302 
-##        Georgia          Idaho       Illinois 
-##            126             96            237 
-##        Indiana           Iowa         Kansas 
-##             79             56             45 
-##       Kentucky      Louisiana          Maine 
-##            114             41             17 
-##       Maryland  Massachusetts       Michigan 
-##             34             29            216 
-##      Minnesota    Mississippi       Missouri 
-##             72             21            158 
-##        Montana       Nebraska         Nevada 
-##             51             15              7 
-##  New Hampshire     New Jersey     New Mexico 
-##             14             66             42 
-##       New York North Carolina   North Dakota 
-##            111             89              4 
-##           Ohio       Oklahoma         Oregon 
-##            303             97            249 
-##   Pennsylvania   Rhode Island South Carolina 
-##            115              5             41 
-##   South Dakota      Tennessee          Texas 
-##             13             96            230 
-##           Utah        Vermont       Virginia 
-##             58             10             79 
-##     Washington  West Virginia      Wisconsin 
-##            601            103             85 
-##        Wyoming 
-##             27
+##  0  1 
+##  6 15
 ```
 
 ```r
-max(bigfoot$temperature, na.rm = TRUE)
+max(rodents$meanhfl)
 ```
 
 ```
-## [1] 94.03
+## [1] 49.92785
 ```
 ---
 # Additional Functionality -&gt; Installing and Loading Packages.
@@ -698,21 +689,19 @@ In this case, the code opened a library containing R functions we want to use. Y
 ---
 ## Making our first plot
 
-Next we'll create a plot to show something about our `bigfoot` dataset. Today, we'll just run the code and see what happens. The next few sessions, you will be fluent with all the code below, but for now let's just get a taste.
+Next we'll create a plot to show something about our `rodents` dataset. Today, we'll just run the code and see what happens. The next few sessions, you will be fluent with all the code below, but for now let's just get a taste.
 
 
 ```r
-# Start by running this code that will focus in 
-# on the information that we are interested in
-bigfoot_focus &lt;- bigfoot %&gt;% 
-  mutate(year = lubridate::year(date)) %&gt;% 
-  group_by(year, season) %&gt;% 
-  summarize(number_of_sightings = n()) %&gt;% filter(year &gt;= 1960 &amp; season != "Unknown")
+## This dataframe will create a new column saying
+## whether a rodent is a mouse or rat
+rodents_extra &lt;- rodents %&gt;% 
+  mutate(rodent_type =if_else(str_detect(commonname, "rat"), "Rat", "Mouse"))
   
 # Let's create an object that only holds observations 
-# for a specific state
-fav_season &lt;- bigfoot_focus %&gt;% 
-  filter(season == "Summer") 
+# for a specific species
+fav_rodent &lt;- rodents_extra %&gt;% 
+  filter(commonname == "Northern pygmy mouse") 
 ```
 
 ---
@@ -721,67 +710,46 @@ fav_season &lt;- bigfoot_focus %&gt;%
 ```r
 #The following code creates a somewhat complex plot.
 ggplot() + 
-  geom_point(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
-  geom_line(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
-  geom_point(data = fav_season, 
-             aes(x = year, y = number_of_sightings),
-             color = "red", size = 3) +
-  geom_line(data = fav_season, 
-             aes(x = year, y = number_of_sightings),
-             color = "red", size = 1) + 
-  theme_classic() + labs(y = "Number of Bigfoot Sightings", x = "Year of Sighting") 
+  geom_boxplot(data = rodents_extra, aes(x = rodent_type, y = meanhfl, fill = rodent_type)) +
+  geom_point(data = fav_rodent, 
+             aes(x = rodent_type, y = meanhfl),
+             color = "blue", size = 3) +
+  theme_classic() + labs(y = "Mean Hindfoot Length", x = "Rodent Type", fill = "Rodent Type") 
 ```
 
 &lt;img src="IntroR_Slides_files/figure-html/unnamed-chunk-36-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
 
-What we have plotted is the Year of the sighting on the x-axis and the number of sightings on the y axis. 
+What we have plotted is the type of rodent on the x-axis and the mean hindfoot length on the y axis. 
 
-The red dot/line shows the season I was particularly interested in visualizing,  
+The red dot shows the specific rodent I was particularly interested in visualizing.  
 ---
 # EXERCISE 4
 
 In the r chunk below, I have copied the code to make this plot. 
 
-1. Look in the code for where I have specified **filter(season == "Summer")** and change it to the season of your choice.
+1. Look in the code for where I have specified **filter(commonname == "Northern pygmy mouse")** and change it to the species of your choice.
 
 2. Run the two lines of code to produce a new plot. 
 ---
 
 ```r
-fav_season &lt;- bigfoot_focus %&gt;% 
-  filter(season == "Summer")  ## Change this line ##
+fav_rodent &lt;- rodents_extra %&gt;% 
+  filter(commonname == "")   ## Change this line ##
 
 ggplot() + 
-  geom_point(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
-  geom_line(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
-  geom_point(data = fav_season, 
-             aes(x = year, y = number_of_sightings),
-             color = "red", size = 3) +
-  geom_line(data = fav_season, 
-             aes(x = year, y = number_of_sightings),
-             color = "red", size = 1) + 
-  theme_classic() + labs(y = "Number of Bigfoot Sightings", x = "Year of Sighting") 
+  geom_boxplot(data = rodents_extra, aes(x = rodent_type, y = meanhfl, fill = rodent_type)) +
+  geom_point(data = fav_rodent, 
+             aes(x = rodent_type, y = meanhfl),
+             color = "blue", size = 3) +
+  theme_classic() + labs(y = "Mean Hindfoot Length", x = "Rodent Type", fill = "Rodent Type") 
 ```
 
 &lt;img src="IntroR_Slides_files/figure-html/unnamed-chunk-37-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
 
-Does the season you specified show up as a red dot/line? If yes, great! If you could NOT get a plot to work, great! Let's work through it together. Is there an error message in the console? What does it say? What season were we trying to plot? How did you specify the season?
+Does the rodent you specified show up as a red dot? If yes, great! If you could NOT get a plot to work, great! Let's work through it together. Is there an error message in the console? What does it say? What rodent were we trying to plot? How did you specify the common name?
 
--------------------------------------------------
 ---
 # Additional useful tools
-
-```r
-# Alternative for Exercise 3-2 (Will see next workshop)
-bigfoot %&gt;% 
-  filter(state == "Virginia") %&gt;% 
-  summarize(count = n())
-```
-
-```
-##   count
-## 1    79
-```
 
 ```r
 # You can also directly access cells in your dataframe by subsetting your data. 
@@ -789,49 +757,68 @@ bigfoot %&gt;%
 # full row(s) will be returned. The opposite is true if a column is specified and 
 # not a row. If you specify both a row and column, than an individual cell(s) will 
 # be written out.
-bigfoot[1, ]
+rodents[1, ]
 ```
 
 ```
-##   title   state date season precip_type number
-## 1  &lt;NA&gt; Alabama &lt;NA&gt; Summer        &lt;NA&gt;  30680
-##   temperature dew_point humidity visibility uv_index
-## 1          NA        NA       NA         NA       NA
-```
-
-```r
-head(bigfoot[, 5])
-```
-
-```
-## [1] NA     NA     NA     NA     NA     "rain"
+##   species  scientificname           commonname granivore
+## 1      BA Baiomys taylori Northern pygmy mouse         1
+##   minhfl  meanhfl maxhfl minwgt  meanwgt maxwgt juvwgt
+## 1      6 13.25065     15      6 9.449086     18     NA
 ```
 
 ```r
-bigfoot[5, 6]
+rodents[, 5]
 ```
 
 ```
-## [1] 703
+##  [1]  6 16 21 18 11 21 15 39 21 12 11  7 11 10 12 15  6
+## [18] 11 19 20 15
+```
+
+```r
+rodents[5, 6]
+```
+
+```
+## [1] 21.47861
 ```
 ---
 
 ```r
 # One other useful tool that acts like a + sign, but for character values are 
 # the paste or paste0 functions.
-head(paste0(bigfoot$state, ", ", bigfoot$date))
+paste0(rodents$commonname, ", ", rodents$scientificname)
 ```
 
 ```
-## [1] "Alabama, NA"              "Alaska, NA"              
-## [3] "Rhode Island, 1974-09-20" "Pennsylvania, NA"        
-## [5] "Oregon, NA"               "Oklahoma, 1973-09-28"
+##  [1] "Northern pygmy mouse, Baiomys taylori"            
+##  [2] "Bailey's pocket mouse, Chaetodipus baileyi"       
+##  [3] "Hispid pocket mouse, Chaetodipus hispidus"        
+##  [4] "Rock pocket mouse, Chaetodipus intermedius"       
+##  [5] "Desert pocket mouse, Chaetodipus penicillatus"    
+##  [6] "Merriam's kangaroo rat, Dipodomys merriami"       
+##  [7] "Ord's kangaroo rat, Dipodomys ordii"              
+##  [8] "Banner-tailed kangaroo rat, Dipodomys spectabilis"
+##  [9] "White-throated woodrat, Neotoma albigula"         
+## [10] "Northern Grasshopper Mouse, Onychomys leucogaster"
+## [11] "Southern grasshopper mouse, Onychomys torridus"   
+## [12] "Silky pocket mouse, Perognathus flavus"           
+## [13] "Cactus mouse, Peromyscus eremicus"                
+## [14] "White-footed mouse, Peromyscus leucopus"          
+## [15] "Deer Mouse, Peromyscus maniculatus"               
+## [16] "Fulvous harvest mouse, Reithrodontomys fulvescens"
+## [17] "Western harvest mouse, Reithrodontomys megalotis" 
+## [18] "Plains harvest mouse, Reithrodontomys montanus"   
+## [19] "Tawny-bellied cotton rat, Sigmodon fulviventer"   
+## [20] "Hispid cotton rat, Sigmodon hispidus"             
+## [21] "Yellow nosed cotton rat, Sigmodon ochrognathus"
 ```
 
 ```r
 # Finally, you can write out your dataset to a csv file using the write.csv or 
 #write_csv functions.
-write_csv(bigfoot, "bigfoot_edits.csv")
+write_csv(rodents_extra, "rodents_extra.csv")
 ```
 
 ---
