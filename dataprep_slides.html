@@ -3,7 +3,7 @@
   <head>
     <title>Data Preparation with DPLYR</title>
     <meta charset="utf-8" />
-    <script src="libs/header-attrs-2.19/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.20/header-attrs.js"></script>
     <link href="libs/xaringanExtra-extra-styles-0.2.6/xaringanExtra-extra-styles.css" rel="stylesheet" />
     <link href="libs/tachyons-4.12.0/tachyons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="xaringan-themer_2.css" type="text/css" />
@@ -43,21 +43,25 @@ library(stringr)
 library(tidyr)
 ```
 
-Read in the bigfoot sightings data. We are going to be using the `read_csv()` package today, which will read in the data with some added functionality above `read.csv()`.
+---
+
+Read in the rodent sightings dataset. This dataset is different from the previous class as it looks at individual rodent sightings instead of looking at an aggregated level where each row is the average for an entire species. We are going to be using the `read_csv()` package today, which will read in the data with some added functionality above `read.csv()`.
 
 
 ```r
-bigfoot &lt;- read_csv('bigfoot.csv')
+rodents &lt;- read_csv('rodent_surveys.csv')
 
 # OR 
-# bigfoot &lt;- read.csv('bigfoot.csv')
-# bigfoot &lt;- tibble(bigfoot)
+# rodents &lt;- read.csv('rodent_surveys.csv')
+# rodents &lt;- tibble(rodents)
 ```
+
 ---
+
 ## dplyr
 
 dplyr is a package in R that allows you to work with and manipulate your data. It will allow us to focus in on the variables (columns) of interest and the observations (rows) of interest. 
----
+
 ## The Pipe
 
 The pipe is an operator in R that allows you to chain together functions in dplyr. In the past, to use multiple functions you would have to nest your functions inside of each other, but using the pipe allows you to chain the functions together in a readable/reproducible format. The pipe character is `%&gt;%` and essentially means "then" You can create the character using `CTRL+SHIFT+M` or `CMD+SHIFT+M` 
@@ -67,268 +71,341 @@ The pipe essentially takes whatever is before the pipe as input for whatever is 
 
 ```r
 # Normal way to view your dataset
-View(bigfoot)
+View(rodents)
 
-# Using the pipe, the bigfoot dataframe is passed on to the View function
-bigfoot %&gt;% 
+# Using the pipe, the rodents dataframe is passed on to the View function
+rodents %&gt;% 
   View()
 ```
 ---
-## Head Function 
+
 
 ```r
 # The head function looks at the top of the dataframe
-head(bigfoot)
+head(rodents)
 ```
 
 ```
-## # A tibble: 6 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 &lt;NA&gt;    Alab… NA         Summer &lt;NA&gt;     30680    NA      NA     NA      NA   
-## 2 &lt;NA&gt;    Alas… NA         Fall   &lt;NA&gt;      1261    NA      NA     NA      NA   
-## 3 Report… Rhod… 1974-09-20 Fall   &lt;NA&gt;      6496    73.4    65.7    0.86    2.75
-## 4 &lt;NA&gt;    Penn… NA         Summer &lt;NA&gt;      8000    NA      NA     NA      NA   
-## 5 &lt;NA&gt;    Oreg… NA         Spring &lt;NA&gt;       703    NA      NA     NA      NA   
-## 6 Report… Okla… 1973-09-28 Fall   rain      9765    61.4    51.0    0.79   10   
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 6 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 OL      exclosure &lt;NA&gt;     NA    NA
+## 2 1978-01-08 &lt;NA&gt;    exclosure &lt;NA&gt;     NA    NA
+## 3 1978-01-08 PF      exclosure M        15     7
+## 4 1978-01-08 OT      control   &lt;NA&gt;     NA    NA
+## 5 1978-01-08 DM      control   M        36    40
+## 6 1978-01-08 DM      control   F        34    37
 ```
 
 ```r
 # When you have a function with multiple arguments, the first argument will
 # be taken from whatever is before the pipe operator.
-head(bigfoot, 3)
+head(rodents, 3)
 ```
 
 ```
-## # A tibble: 3 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 &lt;NA&gt;    Alab… NA         Summer &lt;NA&gt;     30680    NA      NA     NA      NA   
-## 2 &lt;NA&gt;    Alas… NA         Fall   &lt;NA&gt;      1261    NA      NA     NA      NA   
-## 3 Report… Rhod… 1974-09-20 Fall   &lt;NA&gt;      6496    73.4    65.7    0.86    2.75
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 3 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 OL      exclosure &lt;NA&gt;     NA    NA
+## 2 1978-01-08 &lt;NA&gt;    exclosure &lt;NA&gt;     NA    NA
+## 3 1978-01-08 PF      exclosure M        15     7
 ```
-
----
 
 ```r
-bigfoot %&gt;% 
+rodents %&gt;% 
   head(3)
 ```
 
 ```
-## # A tibble: 3 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 &lt;NA&gt;    Alab… NA         Summer &lt;NA&gt;     30680    NA      NA     NA      NA   
-## 2 &lt;NA&gt;    Alas… NA         Fall   &lt;NA&gt;      1261    NA      NA     NA      NA   
-## 3 Report… Rhod… 1974-09-20 Fall   &lt;NA&gt;      6496    73.4    65.7    0.86    2.75
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 3 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 OL      exclosure &lt;NA&gt;     NA    NA
+## 2 1978-01-08 &lt;NA&gt;    exclosure &lt;NA&gt;     NA    NA
+## 3 1978-01-08 PF      exclosure M        15     7
 ```
+---
+
 
 ```r
-bigfoot %&gt;% 
+rodents %&gt;% 
   head(5) %&gt;% 
   tail(1)
 ```
 
 ```
-## # A tibble: 1 × 11
-##   title state  date   season precip_type number temper…¹ dew_p…² humid…³ visib…⁴
-##   &lt;chr&gt; &lt;chr&gt;  &lt;date&gt; &lt;chr&gt;  &lt;chr&gt;        &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 &lt;NA&gt;  Oregon NA     Spring &lt;NA&gt;           703       NA      NA      NA      NA
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​temperature, ²​dew_point, ³​humidity, ⁴​visibility
+## # A tibble: 1 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 DM      control   M        36    40
 ```
----
-
 
 ```r
 # The pipe is useful for cases like this, where you have three nested functions
-head(tail(head(bigfoot, 36), 15), 3)
+head(tail(head(rodents, 36), 15), 3)
 ```
 
 ```
-## # A tibble: 3 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… New … 2015-10-02 Summer rain     49883    46.7    44.4    0.87    9.16
-## 2 Report… New … 2000-05-17 Spring rain      4904    34.9    12.2    0.29   10   
-## 3 Report… New … 2006-10-02 Fall   &lt;NA&gt;     16207    55.6    25.8    0.35   10   
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 3 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 DS      control   M        53   136
+## 2 1978-01-08 OT      exclosure &lt;NA&gt;     NA    NA
+## 3 1978-01-08 OT      exclosure &lt;NA&gt;     NA    NA
 ```
 
 ```r
-bigfoot %&gt;% 
+rodents %&gt;% 
   head(36) %&gt;% 
   tail(15) %&gt;% 
   head(3)
 ```
 
 ```
-## # A tibble: 3 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… New … 2015-10-02 Summer rain     49883    46.7    44.4    0.87    9.16
-## 2 Report… New … 2000-05-17 Spring rain      4904    34.9    12.2    0.29   10   
-## 3 Report… New … 2006-10-02 Fall   &lt;NA&gt;     16207    55.6    25.8    0.35   10   
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 3 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 DS      control   M        53   136
+## 2 1978-01-08 OT      exclosure &lt;NA&gt;     NA    NA
+## 3 1978-01-08 OT      exclosure &lt;NA&gt;     NA    NA
 ```
-
 ---
+
 ## distinct/count
 
-The distinct function will provide for you the distinct values of a column, while count provides you with both the distinct values of a column and then number of times each value shows up. The following example investigates the different seasons (`season`) in the `bigfoot` dataframe:
+The distinct function will provide for you the distinct values of a column, while count provides you with both the distinct values of a column and then number of times each value shows up. The following example investigates the different species (`species`) in the `rodents` dataframe:
 
 
 ```r
-bigfoot %&gt;% 
-  distinct(season)
+rodents %&gt;% 
+  distinct(species)
 ```
 
 ```
-## # A tibble: 5 × 1
-##   season 
-##   &lt;chr&gt;  
-## 1 Summer 
-## 2 Fall   
-## 3 Spring 
-## 4 Winter 
-## 5 Unknown
+## # A tibble: 21 × 1
+##    species
+##    &lt;chr&gt;  
+##  1 OL     
+##  2 &lt;NA&gt;   
+##  3 PF     
+##  4 OT     
+##  5 DM     
+##  6 DS     
+##  7 RM     
+##  8 DO     
+##  9 PM     
+## 10 PP     
+## # … with 11 more rows
 ```
 
 ```r
-#Pipe into nrow() to get the number of distinct seasons (other functions also exist to do something similar)
-bigfoot %&gt;% 
-  distinct(season) %&gt;% 
+#Pipe into nrow() to get the number of distinct species (other functions also exist to do something similar)
+rodents %&gt;% 
+  distinct(species) %&gt;% 
   nrow()
 ```
 
 ```
-## [1] 5
+## [1] 21
 ```
----
-### Count
+
+--- 
 
 
 ```r
-bigfoot %&gt;% 
-  count(season)
+rodents %&gt;% 
+  count(species)
 ```
 
 ```
-## # A tibble: 5 × 2
-##   season      n
-##   &lt;chr&gt;   &lt;int&gt;
-## 1 Fall     1492
-## 2 Spring    825
-## 3 Summer   1867
-## 4 Unknown    92
-## 5 Winter    745
-```
-
-```r
-bigfoot %&gt;% 
-  count(precip_type)
-```
-
-```
-## # A tibble: 3 × 2
-##   precip_type     n
-##   &lt;chr&gt;       &lt;int&gt;
-## 1 rain         1562
-## 2 snow          161
-## 3 &lt;NA&gt;         3298
+## # A tibble: 21 × 2
+##    species     n
+##    &lt;chr&gt;   &lt;int&gt;
+##  1 BA        211
+##  2 DM       7207
+##  3 DO       1597
+##  4 DS        569
+##  5 OL        521
+##  6 OT       1593
+##  7 PB       4095
+##  8 PE        853
+##  9 PF       1082
+## 10 PH         17
+## # … with 11 more rows
 ```
 ---
+
 ## Exercise 
-Using the `bigfoot` dataframe: 
+Using the `rodents` dataframe: 
 
 1. Using the pipe, get the summary of the dataframe
-2. How many distinct types of uv_index values are in the `bigfoot` dataset? 
-3. How many times does `California` come up?
+
+2. How many distinct types of treatment values are in the `rodents` dataset? 
+
+3. How many times does `PB` come up in `species`?
+
+--- 
 
 
 ```r
 #1.
-bigfoot %&gt;% 
+rodents %&gt;% 
   summary()
+```
 
+```
+##    censusdate           species         
+##  Min.   :1978-01-08   Length:28364      
+##  1st Qu.:1994-03-11   Class :character  
+##  Median :2003-12-20   Mode  :character  
+##  Mean   :2002-06-25                     
+##  3rd Qu.:2012-02-19                     
+##  Max.   :2022-02-26                     
+##                                         
+##   treatment             sex                 hfl       
+##  Length:28364       Length:28364       Min.   : 6.00  
+##  Class :character   Class :character   1st Qu.:21.00  
+##  Mode  :character   Mode  :character   Median :24.00  
+##                                        Mean   :26.55  
+##                                        3rd Qu.:35.00  
+##                                        Max.   :55.00  
+##                                        NA's   :715    
+##       wgt        
+##  Min.   :  4.00  
+##  1st Qu.: 17.00  
+##  Median : 26.00  
+##  Mean   : 32.54  
+##  3rd Qu.: 43.00  
+##  Max.   :259.00  
+##  NA's   :675
+```
+
+```r
 #2.
-bigfoot %&gt;% 
-  distinct(uv_index) %&gt;% 
+rodents %&gt;% 
+  distinct(treatment) %&gt;% 
   nrow()
-  #15
+```
+
+```
+## [1] 3
+```
+
+```r
+  #3
 
 #3. 
-bigfoot %&gt;% 
-  count(state)
-  #417
+rodents %&gt;% 
+  count(species)
 ```
+
+```
+## # A tibble: 21 × 2
+##    species     n
+##    &lt;chr&gt;   &lt;int&gt;
+##  1 BA        211
+##  2 DM       7207
+##  3 DO       1597
+##  4 DS        569
+##  5 OL        521
+##  6 OT       1593
+##  7 PB       4095
+##  8 PE        853
+##  9 PF       1082
+## 10 PH         17
+## # … with 11 more rows
+```
+
+```r
+  #4095
+```
+
 ---
--------------------------
 
 ## Arrange
 
 The `arrange()` function does what it sounds like. It takes a data frame or tbl and arranges (or sorts) by column(s) of interest. The first argument is the data, and subsequent arguments are columns to sort on. Use the `desc()` function to arrange by descending.
 
-The following code would get the number of times each state shows up in the bigfoot dataset:
+The following code would get the number of times each species shows up in the `rodents` dataset:
 
 
 ```r
-bigfoot %&gt;% 
-  count(state) %&gt;% 
+rodents %&gt;% 
+  count(species) %&gt;% 
   arrange(n)
 ```
 
 ```
-## # A tibble: 49 × 2
-##    state             n
-##    &lt;chr&gt;         &lt;int&gt;
-##  1 North Dakota      4
-##  2 Delaware          5
-##  3 Rhode Island      5
-##  4 Nevada            7
-##  5 Vermont          10
-##  6 South Dakota     13
-##  7 New Hampshire    14
-##  8 Nebraska         15
-##  9 Maine            17
-## 10 Connecticut      18
-## # … with 39 more rows
+## # A tibble: 21 × 2
+##    species     n
+##    &lt;chr&gt;   &lt;int&gt;
+##  1 PH         17
+##  2 SO         23
+##  3 RF         30
+##  4 PL         35
+##  5 RO         40
+##  6 PI         55
+##  7 SF        194
+##  8 BA        211
+##  9 SH        215
+## 10 &lt;NA&gt;      399
+## # … with 11 more rows
 ```
+
 ---
+
 
 ```r
 # Since the default is ascending order, we are not getting the results that are probably useful, so let's use the desc() function
-bigfoot %&gt;% 
-  count(state) %&gt;% 
-  arrange(desc(n)) %&gt;% 
-  head(3)
+rodents %&gt;% 
+  count(species) %&gt;% 
+  arrange(desc(n))
 ```
 
 ```
-## # A tibble: 3 × 2
-##   state          n
-##   &lt;chr&gt;      &lt;int&gt;
-## 1 Washington   601
-## 2 California   417
-## 3 Ohio         303
+## # A tibble: 21 × 2
+##    species     n
+##    &lt;chr&gt;   &lt;int&gt;
+##  1 PP       7270
+##  2 DM       7207
+##  3 PB       4095
+##  4 RM       1812
+##  5 DO       1597
+##  6 OT       1593
+##  7 PF       1082
+##  8 PE        853
+##  9 DS        569
+## 10 PM        546
+## # … with 11 more rows
 ```
-
 
 ```r
 # Alternatively you can use the "-" to denote descending
-bigfoot %&gt;% 
-  arrange(-temperature)
+rodents %&gt;% 
+  count(species) %&gt;% 
+  arrange(-n)
 ```
+
+```
+## # A tibble: 21 × 2
+##    species     n
+##    &lt;chr&gt;   &lt;int&gt;
+##  1 PP       7270
+##  2 DM       7207
+##  3 PB       4095
+##  4 RM       1812
+##  5 DO       1597
+##  6 OT       1593
+##  7 PF       1082
+##  8 PE        853
+##  9 DS        569
+## 10 PM        546
+## # … with 11 more rows
+```
+
 ---
+
 ## filter
 
 If you want to filter **rows** of the data where some condition is true, use the `filter()` function. 
@@ -347,197 +424,193 @@ The "or" operator `|` (the pipe character, usually shift-backslash) will return 
 
 
 ```r
-#Keeps those bigfoot sightings that occurred at over 88 degrees
-
-bigfoot %&gt;% 
-  filter(temperature &gt; 88) %&gt;% 
-  head(5)
+#Keeps those rodents that have a weight greater than 60
+rodents %&gt;% 
+  filter(wgt &gt; 60) %&gt;% head(n = 5)
 ```
 
 ```
-## # A tibble: 5 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… Miss… 1981-08-15 Summer &lt;NA&gt;     13347    88.1    69.9    0.66    5.45
-## 2 Report… Texas 2017-06-23 Summer &lt;NA&gt;     57760    89.4    73.1    0.64    9.82
-## 3 Report… Texas 2006-08-01 Summer &lt;NA&gt;     16499    88.4    64.1    0.48   10   
-## 4 Report… Texas 2007-08-13 Summer &lt;NA&gt;     21438    88.5    71.2    0.63    8.86
-## 5 Report… Texas 2011-06-30 Summer &lt;NA&gt;     30238    88.1    64.8    0.47   10   
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 5 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 DS      control   F        47   117
+## 2 1978-01-08 DS      control   M        49   132
+## 3 1978-01-08 DS      control   F        50   126
+## 4 1978-01-08 DS      control   F        51   122
+## 5 1978-01-08 DS      control   F        48   116
 ```
+
+```r
+# Keeps those rodents that weight less than or 
+# equal to 10
+rodents %&gt;% 
+  filter(wgt &lt;= 10)  %&gt;% head(n = 5)
+```
+
+```
+## # A tibble: 5 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 PF      exclosure M        15     7
+## 2 1978-03-11 PF      exclosure M        15     8
+## 3 1978-06-08 PF      exclosure M        15     8
+## 4 1978-07-07 PF      exclosure M        16     8
+## 5 1978-07-07 PP      exclosure F        23    10
+```
+
 ---
 
-```r
-#Keeps those bigfoot sightings occurred at less than or equal to 20 degrees
-bigfoot %&gt;% 
-  filter(temperature &lt;= 20) %&gt;% 
-  head(5)
-```
-
-```
-## # A tibble: 5 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… Nort… 1988-03-15 Spring &lt;NA&gt;      3339   17.7     9.5     0.79    9.5 
-## 2 Report… Mont… 1988-12-15 Winter snow      1757    7.44    0.16    0.75   10   
-## 3 Report… Mont… 2019-03-09 Winter &lt;NA&gt;     63148    9.61    6.41    0.76    9.78
-## 4 Report… Mont… 2015-11-26 Summer snow     50297   12.9     1.46    0.65   10   
-## 5 Report… Nebr… 2005-01-06 Summer snow      7809    8.60    1.68    0.82    8.21
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
-```
 
 ```r
-#Keeps those bigfoot sightings that have a temperature greater than 80 in California
-bigfoot %&gt;% 
-  filter(temperature &gt; 80 &amp; state == "California") %&gt;% 
-  head(5)
+#Keeps those rodents that have a wgt greater than 60 who have been treated as control
+rodents %&gt;% 
+  filter(wgt &gt; 60 &amp; treatment == "control")  %&gt;%
+  head(n = 5)
 ```
 
 ```
-## # A tibble: 4 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… Cali… 1977-08-01 Spring rain      7555    89.2    44.4    0.26    8.67
-## 2 Report… Cali… 1997-07-15 Summer rain     11496    80.2    54.0    0.44   10   
-## 3 Report… Cali… 2014-07-15 Summer &lt;NA&gt;     59668    82.2    50.0    0.32   10   
-## 4 Report… Cali… 2008-07-08 Summer &lt;NA&gt;     24146    82.2    50.1    0.42    7.03
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 5 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 DS      control   F        47   117
+## 2 1978-01-08 DS      control   M        49   132
+## 3 1978-01-08 DS      control   F        50   126
+## 4 1978-01-08 DS      control   F        51   122
+## 5 1978-01-08 DS      control   F        48   116
 ```
----
 
 ```r
-#Count the number of bigfoot sightings fitting the conditions above
-bigfoot %&gt;% 
-  filter(temperature &gt; 80 &amp; state == "California") %&gt;% 
-  count() %&gt;% 
-  head(5)
+#Count the number of rodents fitting the conditions above
+rodents %&gt;% 
+  filter(wgt &gt; 60 &amp; treatment == "control") %&gt;%
+  count()
 ```
 
 ```
 ## # A tibble: 1 × 1
 ##       n
 ##   &lt;int&gt;
-## 1     4
+## 1   868
 ```
 
 ```r
-#Keeps state that contain a capital I
-bigfoot %&gt;% 
-  filter(str_detect(state, "I")) %&gt;% 
-  head(5)
+#Keeps Species that contain a capital P
+rodents %&gt;% 
+  filter(str_detect(species, "P"))  %&gt;% head(n = 5)
 ```
 
 ```
-## # A tibble: 5 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… Rhod… 1974-09-20 Fall   &lt;NA&gt;      6496    73.4    65.7    0.86    2.75
-## 2 Report… Rhod… 1978-07-15 Summer rain      6643    65.8    62.3    0.88    5.71
-## 3 Report… Rhod… 2006-11-03 Fall   &lt;NA&gt;     16746    39.8    25.2    0.57   10   
-## 4 Report… Rhod… 1998-10-15 Fall   &lt;NA&gt;     15923    51.3    44.7    0.79    9.19
-## 5 Report… Rhod… 2011-11-15 Spring &lt;NA&gt;     30906    58.1    51.9    0.79    9.97
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 5 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 PF      exclosure M        15     7
+## 2 1978-02-18 PF      control   &lt;NA&gt;     NA    NA
+## 3 1978-03-11 PF      exclosure M        15     8
+## 4 1978-03-11 PF      exclosure F        NA    NA
+## 5 1978-03-11 PF      control   &lt;NA&gt;     NA    NA
 ```
+
 ---
+
 
 ```r
 # The filter function is helpful for dropping missing values
-bigfoot %&gt;% 
-  filter(!is.na(precip_type)) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  filter(!is.na(hfl))  %&gt;% head(n = 5)
 ```
 
 ```
-## # A tibble: 5 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… Okla… 1973-09-28 Fall   rain      9765   61.4    51.0     0.79   10   
-## 2 Report… New … 2016-06-07 Summer rain     55269   64.2    54.6     0.79    9.7 
-## 3 Report… Nort… 2000-04-21 Spring rain       751   59.0    31.0     0.32   10   
-## 4 Report… Mont… 1988-12-15 Winter snow      1757    7.44    0.16    0.75   10   
-## 5 Report… New … 2015-10-02 Summer rain     49883   46.7    44.4     0.87    9.16
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 5 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 PF      exclosure M        15     7
+## 2 1978-01-08 DM      control   M        36    40
+## 3 1978-01-08 DM      control   F        34    37
+## 4 1978-01-08 DS      control   F        47   117
+## 5 1978-01-08 DM      control   M        36    40
 ```
 
 ```r
 # drop_na works in a similar manner, but be careful
-bigfoot %&gt;% 
-  drop_na(precip_type) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  drop_na(hfl) %&gt;% head(n = 5)
 ```
 
 ```
-## # A tibble: 5 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Report… Okla… 1973-09-28 Fall   rain      9765   61.4    51.0     0.79   10   
-## 2 Report… New … 2016-06-07 Summer rain     55269   64.2    54.6     0.79    9.7 
-## 3 Report… Nort… 2000-04-21 Spring rain       751   59.0    31.0     0.32   10   
-## 4 Report… Mont… 1988-12-15 Winter snow      1757    7.44    0.16    0.75   10   
-## 5 Report… New … 2015-10-02 Summer rain     49883   46.7    44.4     0.87    9.16
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 5 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 PF      exclosure M        15     7
+## 2 1978-01-08 DM      control   M        36    40
+## 3 1978-01-08 DM      control   F        34    37
+## 4 1978-01-08 DS      control   F        47   117
+## 5 1978-01-08 DM      control   M        36    40
 ```
-
 
 ```r
-bigfoot %&gt;% 
-  drop_na() %&gt;% 
-  head(5) # This would drop any observation that has a single missing value
+ # This would drop any observation that has a single missing value
+rodents %&gt;% 
+  drop_na() %&gt;% head(n = 5)
 ```
+
+```
+## # A tibble: 5 × 6
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 PF      exclosure M        15     7
+## 2 1978-01-08 DM      control   M        36    40
+## 3 1978-01-08 DM      control   F        34    37
+## 4 1978-01-08 DS      control   F        47   117
+## 5 1978-01-08 DM      control   M        36    40
+```
+
 ---
 
 
 ```r
 # You can also save the results of a pipeline. 
-# Here I want to get the top 3 coldest bigfoot sightings
-cold_bigfoot &lt;- bigfoot %&gt;% 
-  arrange(temperature) %&gt;% 
+# Here I want to get the top 3 biggest rodents in weight
+big_rodents &lt;- rodents %&gt;% 
+  drop_na(species) %&gt;% 
+  arrange(-wgt) %&gt;% 
   head(3)
 
-cold_bigfoot %&gt;% View()
+big_rodents %&gt;% View()
 ```
----
+
 ### the %in% operator
 
 The %in% operator is a useful tool when you have a series of conditions that you want to check. Instead of asking whether cond1 or cond2 or cond3 .... are met, you can use the %in% operator to check them all at once.
 
 
 ```r
-states &lt;- c("Virginia", "Washington", "California")
-states
+specs &lt;- c("SF", "DS", "PB")
+specs
 ```
 
 ```
-## [1] "Virginia"   "Washington" "California"
+## [1] "SF" "DS" "PB"
 ```
 
 ```r
-#This code will look through the bigfoot$state column and will only 
-#return the values that match any value in the states vector.
-bigfoot %&gt;% 
-  filter(state %in% states) %&gt;% 
-  head(5)
+#This code will look through the rodents$species column and will only 
+#return the values that match any value in the specs vector.
+rodents %&gt;% 
+  filter(species %in% specs) %&gt;% 
+  count(species)
 ```
 
 ```
-## # A tibble: 5 × 11
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 "Repor… Virg… 1984-04-08 Spring rain      2285    50.8    28.2    0.48    8.75
-## 2 "Repor… Virg… 2003-10-23 Fall   rain     15107    41.0    31.2    0.59   10   
-## 3 "Repor… Virg… 2011-06-10 Summer rain     35981    74.1    62.3    0.73    9.24
-## 4 "Repor… Virg… 2019-04-10 Spring &lt;NA&gt;     62744    58.0    33.1    0.45   10.0 
-## 5 "Repor… Wash… 1950-05-01 Spring rain      1043    40.3    40.3    0.86   10   
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 3 × 2
+##   species     n
+##   &lt;chr&gt;   &lt;int&gt;
+## 1 DS        569
+## 2 PB       4095
+## 3 SF        194
 ```
+
 ---
+
 ## select()
 
 Whereas the `filter()` function allows you to return only certain _rows_ matching a condition, the `select()` function returns only certain _columns_. The first argument is the data, and subsequent arguments are the columns you want.
@@ -545,303 +618,371 @@ Whereas the `filter()` function allows you to return only certain _rows_ matchin
 
 ```r
 # You can simply list the column names you want to keep 
-bigfoot %&gt;% 
-  select(title) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  select(species)
 ```
 
 ```
-## # A tibble: 5 × 1
-##   title                                             
-##   &lt;chr&gt;                                             
-## 1 &lt;NA&gt;                                              
-## 2 &lt;NA&gt;                                              
-## 3 Report 6496: Bicycling student has night encounter
-## 4 &lt;NA&gt;                                              
-## 5 &lt;NA&gt;
+## # A tibble: 28,364 × 1
+##    species
+##    &lt;chr&gt;  
+##  1 OL     
+##  2 &lt;NA&gt;   
+##  3 PF     
+##  4 OT     
+##  5 DM     
+##  6 DM     
+##  7 DS     
+##  8 DM     
+##  9 DS     
+## 10 OL     
+## # … with 28,354 more rows
 ```
 
 ```r
 # Multiple columns can be separated by a comma
-bigfoot %&gt;% 
-  select(title, state) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  select(censusdate, species)
 ```
 
 ```
-## # A tibble: 5 × 2
-##   title                                              state       
-##   &lt;chr&gt;                                              &lt;chr&gt;       
-## 1 &lt;NA&gt;                                               Alabama     
-## 2 &lt;NA&gt;                                               Alaska      
-## 3 Report 6496: Bicycling student has night encounter Rhode Island
-## 4 &lt;NA&gt;                                               Pennsylvania
-## 5 &lt;NA&gt;                                               Oregon
+## # A tibble: 28,364 × 2
+##    censusdate species
+##    &lt;date&gt;     &lt;chr&gt;  
+##  1 1978-01-08 OL     
+##  2 1978-01-08 &lt;NA&gt;   
+##  3 1978-01-08 PF     
+##  4 1978-01-08 OT     
+##  5 1978-01-08 DM     
+##  6 1978-01-08 DM     
+##  7 1978-01-08 DS     
+##  8 1978-01-08 DM     
+##  9 1978-01-08 DS     
+## 10 1978-01-08 OL     
+## # … with 28,354 more rows
 ```
+
 ---
+
 
 ```r
 # Or you can use the - sign to tell dplyr the columns you want to drop
-bigfoot %&gt;% 
-  select(-title, -state) %&gt;% 
-  arrange(date) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  select(-species, -treatment) %&gt;% 
+  arrange(desc(censusdate))
 ```
 
 ```
-## # A tibble: 5 × 9
-##   date       season precip_type number tempera…¹ dew_p…² humid…³ visib…⁴ uv_in…⁵
-##   &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 1869-11-10 Fall   &lt;NA&gt;         14338        NA      NA      NA      NA      NA
-## 2 1921-01-14 Winter &lt;NA&gt;         14358        NA      NA      NA      NA      NA
-## 3 1925-10-14 Fall   &lt;NA&gt;         24413        NA      NA      NA      NA      NA
-## 4 1930-09-30 Fall   &lt;NA&gt;          2477        NA      NA      NA      NA      NA
-## 5 1937-08-16 Summer &lt;NA&gt;         14336        NA      NA      NA      NA      NA
-## # … with abbreviated variable names ¹​temperature, ²​dew_point, ³​humidity,
-## #   ⁴​visibility, ⁵​uv_index
+## # A tibble: 28,364 × 4
+##    censusdate sex     hfl   wgt
+##    &lt;date&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 2022-02-26 M        36    46
+##  2 2022-02-26 M        36    44
+##  3 2022-02-26 M        37    51
+##  4 2022-02-26 M        21    16
+##  5 2022-02-26 M        21    19
+##  6 2022-02-26 F        38    44
+##  7 2022-02-26 F        21    18
+##  8 2022-02-26 F        21    14
+##  9 2022-02-26 F        35    28
+## 10 2022-02-26 F        21    14
+## # … with 28,354 more rows
 ```
 
 ```r
 # You can also use the select function to rename variables
-bigfoot %&gt;% 
-  select(Bigfoot_Sighting_Report = title, date, state, temperature) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  select(species_name = species, date = censusdate, hfl, wgt)
 ```
 
 ```
-## # A tibble: 5 × 4
-##   Bigfoot_Sighting_Report                            date       state    tempe…¹
-##   &lt;chr&gt;                                              &lt;date&gt;     &lt;chr&gt;      &lt;dbl&gt;
-## 1 &lt;NA&gt;                                               NA         Alabama     NA  
-## 2 &lt;NA&gt;                                               NA         Alaska      NA  
-## 3 Report 6496: Bicycling student has night encounter 1974-09-20 Rhode I…    73.4
-## 4 &lt;NA&gt;                                               NA         Pennsyl…    NA  
-## 5 &lt;NA&gt;                                               NA         Oregon      NA  
-## # … with abbreviated variable name ¹​temperature
+## # A tibble: 28,364 × 4
+##    species_name date         hfl   wgt
+##    &lt;chr&gt;        &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1 OL           1978-01-08    NA    NA
+##  2 &lt;NA&gt;         1978-01-08    NA    NA
+##  3 PF           1978-01-08    15     7
+##  4 OT           1978-01-08    NA    NA
+##  5 DM           1978-01-08    36    40
+##  6 DM           1978-01-08    34    37
+##  7 DS           1978-01-08    47   117
+##  8 DM           1978-01-08    36    40
+##  9 DS           1978-01-08    49   132
+## 10 OL           1978-01-08    NA    NA
+## # … with 28,354 more rows
 ```
 
 ```r
-# There is also a rename() function that does something similar.
+# There is also a rename() function that does something similar
 ```
 ---
+
 ### starts_with(), ends_with(), contains()
 
 The `starts_with`, `ends_with` and `contains` functions provide very useful tools for dropping/keeping several variables at once without having to list each and every column you want to keep. The function will return columns that either start with a specific string of text, ends with a certain string of text, or contain a certain string of text.
 
 
 ```r
-bigfoot %&gt;% 
-  select(starts_with("s")) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  select(starts_with("s"))
 ```
 
 ```
-## # A tibble: 5 × 2
-##   state        season
-##   &lt;chr&gt;        &lt;chr&gt; 
-## 1 Alabama      Summer
-## 2 Alaska       Fall  
-## 3 Rhode Island Fall  
-## 4 Pennsylvania Summer
-## 5 Oregon       Spring
+## # A tibble: 28,364 × 2
+##    species sex  
+##    &lt;chr&gt;   &lt;chr&gt;
+##  1 OL      &lt;NA&gt; 
+##  2 &lt;NA&gt;    &lt;NA&gt; 
+##  3 PF      M    
+##  4 OT      &lt;NA&gt; 
+##  5 DM      M    
+##  6 DM      F    
+##  7 DS      F    
+##  8 DM      M    
+##  9 DS      M    
+## 10 OL      &lt;NA&gt; 
+## # … with 28,354 more rows
+```
+
+```r
+rodents %&gt;% 
+  select(-ends_with("e"), -ends_with("t"))
+```
+
+```
+## # A tibble: 28,364 × 3
+##    species sex     hfl
+##    &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;
+##  1 OL      &lt;NA&gt;     NA
+##  2 &lt;NA&gt;    &lt;NA&gt;     NA
+##  3 PF      M        15
+##  4 OT      &lt;NA&gt;     NA
+##  5 DM      M        36
+##  6 DM      F        34
+##  7 DS      F        47
+##  8 DM      M        36
+##  9 DS      M        49
+## 10 OL      &lt;NA&gt;     NA
+## # … with 28,354 more rows
 ```
 
 ```r
-bigfoot %&gt;% 
-  select(-ends_with("e"), -ends_with("t")) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  select(contains("m"))
 ```
 
 ```
-## # A tibble: 5 × 5
-##   season number humidity visibility uv_index
-##   &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;    &lt;dbl&gt;
-## 1 Summer  30680    NA         NA          NA
-## 2 Fall     1261    NA         NA          NA
-## 3 Fall     6496     0.86       2.75        4
-## 4 Summer   8000    NA         NA          NA
-## 5 Spring    703    NA         NA          NA
+## # A tibble: 28,364 × 1
+##    treatment
+##    &lt;chr&gt;    
+##  1 exclosure
+##  2 exclosure
+##  3 exclosure
+##  4 control  
+##  5 control  
+##  6 control  
+##  7 control  
+##  8 control  
+##  9 control  
+## 10 control  
+## # … with 28,354 more rows
 ```
----
 
-```r
-bigfoot %&gt;% 
-  select(contains("um"))
-```
+--- 
 
-```
-## # A tibble: 5,021 × 2
-##    number humidity
-##     &lt;dbl&gt;    &lt;dbl&gt;
-##  1  30680    NA   
-##  2   1261    NA   
-##  3   6496     0.86
-##  4   8000    NA   
-##  5    703    NA   
-##  6   9765     0.79
-##  7   4983    NA   
-##  8  31940     0.68
-##  9   5692     0.45
-## 10    438    NA   
-## # … with 5,011 more rows
-```
 
 ```r
 # You can also create a vector of column names you want to keep 
-bigfoot %&gt;% 
+rodents %&gt;% 
   names()
 ```
 
 ```
-##  [1] "title"       "state"       "date"        "season"      "precip_type"
-##  [6] "number"      "temperature" "dew_point"   "humidity"    "visibility" 
-## [11] "uv_index"
+## [1] "censusdate" "species"    "treatment"  "sex"       
+## [5] "hfl"        "wgt"
 ```
 
 ```r
-vars &lt;- c( "title", "state", "date", "temperature")
+vars &lt;- c( "species", "treatment", "hfl", "wgt")
 
-bigfoot %&gt;% 
-  select(all_of(vars)) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  select(all_of(vars))
 ```
 
 ```
-## # A tibble: 5 × 4
-##   title                                              state    date       tempe…¹
-##   &lt;chr&gt;                                              &lt;chr&gt;    &lt;date&gt;       &lt;dbl&gt;
-## 1 &lt;NA&gt;                                               Alabama  NA            NA  
-## 2 &lt;NA&gt;                                               Alaska   NA            NA  
-## 3 Report 6496: Bicycling student has night encounter Rhode I… 1974-09-20    73.4
-## 4 &lt;NA&gt;                                               Pennsyl… NA            NA  
-## 5 &lt;NA&gt;                                               Oregon   NA            NA  
-## # … with abbreviated variable name ¹​temperature
+## # A tibble: 28,364 × 4
+##    species treatment   hfl   wgt
+##    &lt;chr&gt;   &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1 OL      exclosure    NA    NA
+##  2 &lt;NA&gt;    exclosure    NA    NA
+##  3 PF      exclosure    15     7
+##  4 OT      control      NA    NA
+##  5 DM      control      36    40
+##  6 DM      control      34    37
+##  7 DS      control      47   117
+##  8 DM      control      36    40
+##  9 DS      control      49   132
+## 10 OL      control      NA    NA
+## # … with 28,354 more rows
 ```
-
 
 ```r
-bigfoot %&gt;% 
+rodents %&gt;% 
   select(-vars)
 ```
+
+```
+## # A tibble: 28,364 × 2
+##    censusdate sex  
+##    &lt;date&gt;     &lt;chr&gt;
+##  1 1978-01-08 &lt;NA&gt; 
+##  2 1978-01-08 &lt;NA&gt; 
+##  3 1978-01-08 M    
+##  4 1978-01-08 &lt;NA&gt; 
+##  5 1978-01-08 M    
+##  6 1978-01-08 F    
+##  7 1978-01-08 F    
+##  8 1978-01-08 M    
+##  9 1978-01-08 M    
+## 10 1978-01-08 &lt;NA&gt; 
+## # … with 28,354 more rows
+```
 ---
+
 However, you can go ahead and combine `filter` and `select` to subset your data even further.
 
 
 ```r
-bigfoot %&gt;% 
-  filter(temperature &gt;= 85) %&gt;% 
-  select(vars) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  filter(species %in% specs) %&gt;% 
+  select(vars)
 ```
 
 ```
-## # A tibble: 5 × 4
-##   title                                                 state date       tempe…¹
-##   &lt;chr&gt;                                                 &lt;chr&gt; &lt;date&gt;       &lt;dbl&gt;
-## 1 Report 1155: Newspaper account of an encounter with … Nebr… 1980-06-30    85.2
-## 2 Report 36830: Multiple witnesses watch figure cross … Ohio  2012-06-28    86  
-## 3 Report 26543: Nightime roadside sighting south of Wo… Okla… 2009-08-07    87.7
-## 4 Report 65296: Daylight sighting between Broken Bow a… Okla… 2010-08-14    86.6
-## 5 Report 17035: Wood knocks heard by hunter outside Ca… Alab… 2007-08-06    87.0
-## # … with abbreviated variable name ¹​temperature
+## # A tibble: 4,858 × 4
+##    species treatment   hfl   wgt
+##    &lt;chr&gt;   &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1 DS      control      47   117
+##  2 DS      control      49   132
+##  3 DS      control      50   126
+##  4 DS      control      51   122
+##  5 DS      control      48   116
+##  6 DS      control      50   133
+##  7 DS      control      53   136
+##  8 DS      control      49    NA
+##  9 DS      control      NA    NA
+## 10 DS      control      49   124
+## # … with 4,848 more rows
 ```
----
+
 ## Exercise 
 
-1. Using the `bigfoot` dataset, how many bigfoot sightings have a uv_index greater than 11.  Answer should be 27. `hint: use filter and nrow()`
+1. Using the `rodents` dataset, how many rodents have a hindfood length greater than 52.  Answer should be 32. `hint: use filter and nrow()`
 
-2. Use filter to find the bigfoot sightings with a temperature greater than 85 degrees that were during rain (`precip_type`), followed by select to show the state, date, title, and temperature for these observations, arranged in descending order by temperature
+2. Use filter to find the male rodents with a weight greater than 85, followed by select to show the species, censusdate, and weight for these observations, arranged in descending order by weight
 
-3. If I tried to arrange the answer from question 2 by precipitation type instead of temperature, would that work? Why or why not? 
+3. If I tried to arrange the answer from question 2 by sex type instead of weight, would that work? Why or why not? 
+
+---
 
 
 ```r
 #1. 
-bigfoot %&gt;% 
-  filter(uv_index &gt; 11) %&gt;% 
+rodents %&gt;% 
+  filter(hfl &gt; 52) %&gt;% 
   nrow()
 ```
 
 ```
-## [1] 27
+## [1] 32
 ```
----
 
 ```r
 #2.
-bigfoot %&gt;% 
-  filter(temperature &gt; 85 &amp; precip_type == "rain") %&gt;% 
-  select(state, date, title, temperature) %&gt;% 
-  arrange(-temperature)  %&gt;% 
-  head(5)
+rodents %&gt;% 
+  filter(wgt &gt; 85 &amp; sex == "M") %&gt;% 
+  select(species, censusdate, wgt) %&gt;% 
+  arrange(-wgt) %&gt;% 
+  drop_na(species) 
 ```
 
 ```
-## # A tibble: 5 × 4
-##   state      date       title                                            tempe…¹
-##   &lt;chr&gt;      &lt;date&gt;     &lt;chr&gt;                                              &lt;dbl&gt;
-## 1 California 1977-08-01 Report 7555: Two Young Fishermen Have Mid-day E…    89.2
-## 2 Georgia    1992-07-11 Report 18707: Two incidents with two witnesses …    87  
-## 3 Arkansas   2008-07-26 Report 24276: Possible sighting of an upright c…    85.9
-## 4 Kansas     1980-07-20 Report 1311: Daylight sighting by two moto-cros…    85.7
-## 5 Florida    2015-07-14 Report 51044: Vacationer has a possible daytime…    85.6
-## # … with abbreviated variable name ¹​temperature
+## # A tibble: 307 × 3
+##    species censusdate   wgt
+##    &lt;chr&gt;   &lt;date&gt;     &lt;dbl&gt;
+##  1 DS      1981-11-22   170
+##  2 DS      1980-03-21   160
+##  3 DS      1979-10-24   156
+##  4 DS      1981-12-30   155
+##  5 DS      1981-09-29   153
+##  6 DS      1982-02-22   150
+##  7 DS      1980-08-13   149
+##  8 DS      1980-10-11   149
+##  9 DS      1980-11-08   149
+## 10 DS      1981-01-11   148
+## # … with 297 more rows
 ```
 
 ```r
+### May also want to only see those with an actual species value
+
 #3. 
-#It Would not work because precipitation type is no longer a part of the dataset at this point
+#It Would not work because sex is no longer a part of the dataset at this point
 ```
+
 ---
--------------------------
+
 ## summarize()
+
 The `summarize()` function summarizes multiple values to a single value. On its own the `summarize()` function doesn't seem to be all that useful. The dplyr package provides a few convenience functions called `n()` and `n_distinct()` that tell you the number of observations or the number of distinct values of a particular variable.
 
 Notice that summarize takes a data frame and returns a data frame. In this case it's a 1x1 data frame with a single row and a single column. The name of the column, by default is whatever the expression was used to summarize the data. This usually isn't pretty, and if we wanted to work with this resulting data frame later on, we'd want to name that returned value something easier to deal with.
 
 
 ```r
-bigfoot %&gt;% 
-  summarize(mean(temperature))
+rodents %&gt;% 
+  summarize(mean(hfl))
 ```
 
 ```
 ## # A tibble: 1 × 1
-##   `mean(temperature)`
-##                 &lt;dbl&gt;
-## 1                  NA
+##   `mean(hfl)`
+##         &lt;dbl&gt;
+## 1          NA
 ```
 
 ```r
 #Gotta watch out for nas. Use na.rm = TRUE to run the calculation without nas being involved.
-bigfoot %&gt;% 
-  summarize(mean(temperature, na.rm = TRUE))
+rodents %&gt;% 
+  summarize(mean(hfl, na.rm = TRUE))
 ```
 
 ```
 ## # A tibble: 1 × 1
-##   `mean(temperature, na.rm = TRUE)`
-##                               &lt;dbl&gt;
-## 1                              57.8
+##   `mean(hfl, na.rm = TRUE)`
+##                       &lt;dbl&gt;
+## 1                      26.5
 ```
+
 ---
+
 
 ```r
 #The default column names do not look very aesthetically pleasing, let's take care of that.
-bigfoot %&gt;% 
-  summarize(temperature = mean(temperature, na.rm = TRUE))
+rodents %&gt;% 
+  summarize(hfl_mean = mean(hfl, na.rm = TRUE))
 ```
 
 ```
 ## # A tibble: 1 × 1
-##   temperature
-##         &lt;dbl&gt;
-## 1        57.8
+##   hfl_mean
+##      &lt;dbl&gt;
+## 1     26.5
 ```
 
 ```r
 #Again, summarize alone is not entirely useful
-bigfoot %&gt;% 
+rodents %&gt;% 
   summarize(n())
 ```
 
@@ -849,220 +990,143 @@ bigfoot %&gt;%
 ## # A tibble: 1 × 1
 ##   `n()`
 ##   &lt;int&gt;
-## 1  5021
+## 1 28364
 ```
----
+
 ## group_by()
 
 We saw that `summarize()` isn't that useful on its own. Neither is `group_by()` All this does is takes an existing data frame and coverts it into a grouped data frame where operations are performed by group.
 
 
 ```r
-bigfoot %&gt;% 
-  group_by(state) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  group_by(species) %&gt;% head()
 ```
 
 ```
-## # A tibble: 5 × 11
-## # Groups:   state [5]
-##   title   state date       season preci…¹ number tempe…² dew_p…³ humid…⁴ visib…⁵
-##   &lt;chr&gt;   &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 &lt;NA&gt;    Alab… NA         Summer &lt;NA&gt;     30680    NA      NA     NA      NA   
-## 2 &lt;NA&gt;    Alas… NA         Fall   &lt;NA&gt;      1261    NA      NA     NA      NA   
-## 3 Report… Rhod… 1974-09-20 Fall   &lt;NA&gt;      6496    73.4    65.7    0.86    2.75
-## 4 &lt;NA&gt;    Penn… NA         Summer &lt;NA&gt;      8000    NA      NA     NA      NA   
-## 5 &lt;NA&gt;    Oreg… NA         Spring &lt;NA&gt;       703    NA      NA     NA      NA   
-## # … with 1 more variable: uv_index &lt;dbl&gt;, and abbreviated variable names
-## #   ¹​precip_type, ²​temperature, ³​dew_point, ⁴​humidity, ⁵​visibility
+## # A tibble: 6 × 6
+## # Groups:   species [5]
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 OL      exclosure &lt;NA&gt;     NA    NA
+## 2 1978-01-08 &lt;NA&gt;    exclosure &lt;NA&gt;     NA    NA
+## 3 1978-01-08 PF      exclosure M        15     7
+## 4 1978-01-08 OT      control   &lt;NA&gt;     NA    NA
+## 5 1978-01-08 DM      control   M        36    40
+## 6 1978-01-08 DM      control   F        34    37
 ```
+
+```r
+rodents %&gt;% 
+  group_by(species, sex) %&gt;% head()
+```
+
+```
+## # A tibble: 6 × 6
+## # Groups:   species, sex [6]
+##   censusdate species treatment sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 OL      exclosure &lt;NA&gt;     NA    NA
+## 2 1978-01-08 &lt;NA&gt;    exclosure &lt;NA&gt;     NA    NA
+## 3 1978-01-08 PF      exclosure M        15     7
+## 4 1978-01-08 OT      control   &lt;NA&gt;     NA    NA
+## 5 1978-01-08 DM      control   M        36    40
+## 6 1978-01-08 DM      control   F        34    37
+```
+
+---
 
 The real power comes in where `group_by()` and `summarize()` are used together. First, write the `group_by()` statement. Then pipe the result to a call to `summarize()`.
 
 
 ```r
-#Let's summarize the mean temperature of bigfoot sightings for each state
-bigfoot %&gt;% 
-  group_by(state) %&gt;% 
-  summarize(temperature = mean(temperature, na.rm = TRUE))
+#Let's summarize the mean hindfood length of the different species
+rodents %&gt;% 
+  group_by(species) %&gt;% 
+  summarize(hfl = mean(hfl, na.rm = TRUE))
 ```
 
 ```
-## # A tibble: 49 × 2
-##    state       temperature
-##    &lt;chr&gt;             &lt;dbl&gt;
-##  1 Alabama            65.9
-##  2 Alaska             43.1
-##  3 Arizona            58.4
-##  4 Arkansas           62.2
-##  5 California         59.7
-##  6 Colorado           48.0
-##  7 Connecticut        58.8
-##  8 Delaware           54.9
-##  9 Florida            71.8
-## 10 Georgia            65.5
-## # … with 39 more rows
+## # A tibble: 21 × 2
+##    species   hfl
+##    &lt;chr&gt;   &lt;dbl&gt;
+##  1 BA       13.1
+##  2 DM       35.9
+##  3 DO       35.5
+##  4 DS       49.7
+##  5 OL       20.3
+##  6 OT       20.0
+##  7 PB       26.0
+##  8 PE       19.9
+##  9 PF       15.4
+## 10 PH       24.9
+## # … with 11 more rows
 ```
----
 
 ```r
-bigfoot %&gt;% 
-  group_by(state) %&gt;% 
-  summarize(temperature = mean(temperature, na.rm = TRUE))%&gt;% 
-  arrange(-temperature) %&gt;% 
-  head(5)
+rodents %&gt;% 
+  group_by(species) %&gt;% 
+  summarize(hfl = mean(hfl, na.rm = TRUE)) %&gt;% 
+  arrange(-hfl)
 ```
 
 ```
-## # A tibble: 5 × 2
-##   state          temperature
-##   &lt;chr&gt;                &lt;dbl&gt;
-## 1 Florida               71.8
-## 2 Louisiana             70.0
-## 3 South Carolina        66.4
-## 4 Alabama               65.9
-## 5 Georgia               65.5
+## # A tibble: 21 × 2
+##    species   hfl
+##    &lt;chr&gt;   &lt;dbl&gt;
+##  1 DS       49.7
+##  2 DM       35.9
+##  3 DO       35.5
+##  4 &lt;NA&gt;     32.2
+##  5 SH       28.7
+##  6 PB       26.0
+##  7 SO       25.9
+##  8 SF       25.8
+##  9 PH       24.9
+## 10 PI       21.8
+## # … with 11 more rows
 ```
+
+---
+
 
 ```r
 # Filter/select are often used in conjunction with summarize
-bigfoot %&gt;% 
-  filter(precip_type == "snow") %&gt;% 
-  drop_na(temperature) %&gt;% 
-  group_by(state) %&gt;% 
-  summarize(temperature = mean(temperature, na.rm = TRUE)) %&gt;% 
-  arrange(-temperature) %&gt;% 
-  head(5) 
+rodents %&gt;% 
+  drop_na(species) %&gt;% 
+  filter(sex == "F") %&gt;% 
+  group_by(species, sex) %&gt;% 
+  summarize(hfl = mean(hfl, na.rm = TRUE)) %&gt;% 
+  arrange(-hfl)
 ```
 
 ```
-## # A tibble: 5 × 2
-##   state    temperature
-##   &lt;chr&gt;          &lt;dbl&gt;
-## 1 Virginia        40.1
-## 2 Delaware        38.4
-## 3 Idaho           37.3
-## 4 Texas           37.2
-## 5 Missouri        37.0
-```
----
-
-```r
-# You can also utilize multiple groups in the group_by statement
-bigfoot %&gt;% group_by(state, precip_type) %&gt;% 
-  drop_na(precip_type) %&gt;% 
-summarize(temperature = mean(temperature, na.rm = TRUE)) %&gt;% 
-  arrange(state, precip_type)  %&gt;% 
-  print(n = Inf) %&gt;% 
-  head(5)
-```
-
-```
-## # A tibble: 88 × 3
-## # Groups:   state [49]
-##    state          precip_type temperature
-##    &lt;chr&gt;          &lt;chr&gt;             &lt;dbl&gt;
-##  1 Alabama        rain              68.6 
-##  2 Alabama        snow              25.3 
-##  3 Alaska         rain              47.9 
-##  4 Alaska         snow              21.3 
-##  5 Arizona        rain              59.4 
-##  6 Arizona        snow              29.7 
-##  7 Arkansas       rain              64.9 
-##  8 Arkansas       snow              24.0 
-##  9 California     rain              57.5 
-## 10 California     snow              34.5 
-## 11 Colorado       rain              50.1 
-## 12 Colorado       snow              25.3 
-## 13 Connecticut    rain              74.8 
-## 14 Connecticut    snow              36.6 
-## 15 Delaware       rain              42.7 
-## 16 Delaware       snow              38.4 
-## 17 Florida        rain              74.2 
-## 18 Georgia        rain              68.8 
-## 19 Georgia        snow              32.9 
-## 20 Idaho          rain              49.0 
-## 21 Idaho          snow              37.3 
-## 22 Illinois       rain              60.9 
-## 23 Illinois       snow              27.0 
-## 24 Indiana        rain              63.9 
-## 25 Indiana        snow              17.7 
-## 26 Iowa           rain              59.9 
-## 27 Iowa           snow              25.7 
-## 28 Kansas         rain              68.1 
-## 29 Kansas         snow              25.0 
-## 30 Kentucky       rain              61.0 
-## 31 Kentucky       snow              30.2 
-## 32 Louisiana      rain              68.9 
-## 33 Maine          rain              55.2 
-## 34 Maine          snow              30.0 
-## 35 Maryland       rain              65.1 
-## 36 Massachusetts  rain              54.2 
-## 37 Michigan       rain              58.6 
-## 38 Michigan       snow              25.0 
-## 39 Minnesota      rain              59.7 
-## 40 Minnesota      snow              21.7 
-## 41 Mississippi    rain              65.1 
-## 42 Missouri       rain              61.3 
-## 43 Missouri       snow              37.0 
-## 44 Montana        rain              51.0 
-## 45 Montana        snow              13.9 
-## 46 Nebraska       rain              66.6 
-## 47 Nebraska       snow               8.60
-## 48 Nevada         rain             NaN   
-## 49 New Hampshire  rain              64.2 
-## 50 New Hampshire  snow              14.8 
-## 51 New Jersey     rain              56.9 
-## 52 New Jersey     snow              30.2 
-## 53 New Mexico     rain              57.6 
-## 54 New Mexico     snow              27.1 
-## 55 New York       rain              59.9 
-## 56 New York       snow              23.5 
-## 57 North Carolina rain              62.3 
-## 58 North Carolina snow              27.8 
-## 59 North Dakota   rain              59.0 
-## 60 North Dakota   snow              30.7 
-## 61 Ohio           rain              60.9 
-## 62 Ohio           snow              23.3 
-## 63 Oklahoma       rain              61.5 
-## 64 Oklahoma       snow              30.5 
-## 65 Oregon         rain              51.5 
-## 66 Oregon         snow              30.6 
-## 67 Pennsylvania   rain              58.0 
-## 68 Pennsylvania   snow              26.2 
-## 69 Rhode Island   rain              65.8 
-## 70 South Carolina rain              61.3 
-## 71 South Dakota   rain              51.3 
-## 72 South Dakota   snow              22.1 
-## 73 Tennessee      rain              62.3 
-## 74 Texas          rain              63.2 
-## 75 Texas          snow              37.2 
-## 76 Utah           rain              51.9 
-## 77 Utah           snow              30.9 
-## 78 Vermont        rain              57.2 
-## 79 Vermont        snow              24.0 
-## 80 Virginia       rain              58.3 
-## 81 Virginia       snow              40.1 
-## 82 Washington     rain              50.3 
-## 83 Washington     snow              31.2 
-## 84 West Virginia  rain              56.7 
-## 85 West Virginia  snow              28.3 
-## 86 Wisconsin      rain              60.1 
-## 87 Wisconsin      snow              25.0 
-## 88 Wyoming        rain              58.8
+## # A tibble: 20 × 3
+## # Groups:   species [20]
+##    species sex     hfl
+##    &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;
+##  1 DS      F      49.2
+##  2 DM      F      35.6
+##  3 DO      F      35.3
+##  4 SH      F      28.8
+##  5 SO      F      25.9
+##  6 PB      F      25.8
+##  7 SF      F      25.7
+##  8 PH      F      24.6
+##  9 PI      F      21.6
+## 10 PP      F      21.3
+## 11 PM      F      20.2
+## 12 OL      F      20.1
+## 13 OT      F      20.0
+## 14 PE      F      20.0
+## 15 PL      F      19.3
+## 16 RF      F      17.6
+## 17 RM      F      16.3
+## 18 RO      F      15.5
+## 19 PF      F      15.4
+## 20 BA      F      13.2
 ```
 
-```
-## # A tibble: 5 × 3
-## # Groups:   state [3]
-##   state   precip_type temperature
-##   &lt;chr&gt;   &lt;chr&gt;             &lt;dbl&gt;
-## 1 Alabama rain               68.6
-## 2 Alabama snow               25.3
-## 3 Alaska  rain               47.9
-## 4 Alaska  snow               21.3
-## 5 Arizona rain               59.4
-```
 ---
 ## MUTATE ##
 
@@ -1070,102 +1134,110 @@ The `mutate` function allows you to add or modify variables to your dataset.
 
 
 ```r
-# Let us turn our temperature to celsius
-names(bigfoot)
+# Let us calculate the hindfoot length to weight ratio
+
+rodents %&gt;% 
+  mutate(hfl_wgt = (hfl/ wgt)) %&gt;% 
+  select(hfl, wgt, hfl_wgt) %&gt;% head()
 ```
 
 ```
-##  [1] "title"       "state"       "date"        "season"      "precip_type"
-##  [6] "number"      "temperature" "dew_point"   "humidity"    "visibility" 
-## [11] "uv_index"
-```
-
-```r
-bigfoot %&gt;% 
-  mutate(temp_c = (temperature - 32)*5/9) %&gt;% 
-  select(starts_with("temp")) %&gt;% 
-  head(5)
-```
-
-```
-## # A tibble: 5 × 2
-##   temperature temp_c
-##         &lt;dbl&gt;  &lt;dbl&gt;
-## 1        NA     NA  
-## 2        NA     NA  
-## 3        73.4   23.0
-## 4        NA     NA  
-## 5        NA     NA
+## # A tibble: 6 × 3
+##     hfl   wgt hfl_wgt
+##   &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+## 1    NA    NA  NA    
+## 2    NA    NA  NA    
+## 3    15     7   2.14 
+## 4    NA    NA  NA    
+## 5    36    40   0.9  
+## 6    34    37   0.919
 ```
 
 ```r
 # This new variable is only temporary, let's save a new object with this column
-bigfoot_2 &lt;- bigfoot %&gt;% 
-  mutate(temp_c = (temperature - 32)*5/9)
-
-# We can now look at our new dataset with our new variable.
-bigfoot_2 %&gt;% 
-  group_by(state) %&gt;%
-  drop_na(temp_c) %&gt;% 
-  summarize(temp_c = mean(temp_c, na.rm = TRUE)) %&gt;% 
-  select(state, temp_c) %&gt;% 
-  head(5)
+rodents_2 &lt;- rodents %&gt;% 
+  mutate(hfl_wgt = (hfl/ wgt)) %&gt;% head()
 ```
 
-```
-## # A tibble: 5 × 2
-##   state      temp_c
-##   &lt;chr&gt;       &lt;dbl&gt;
-## 1 Alabama     18.8 
-## 2 Alaska       6.17
-## 3 Arizona     14.7 
-## 4 Arkansas    16.8 
-## 5 California  15.4
-```
 ---
+
+
+```r
+# We can now look at our new dataset with our new variable.
+rodents_2 %&gt;% 
+  group_by(species) %&gt;%
+  drop_na(species) %&gt;% 
+  summarize(hfl_wgt = mean(hfl_wgt, na.rm = TRUE)) %&gt;% arrange(-hfl_wgt) %&gt;% 
+  select(species, hfl_wgt) 
+```
+
+```
+## # A tibble: 4 × 2
+##   species hfl_wgt
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1 PF        2.14 
+## 2 DM        0.909
+## 3 OL      NaN    
+## 4 OT      NaN
+```
 
 ```r
 # mutate with if_else
   #if_else statements allow you to conditionally make changes to your data. 
   #if the condition is true, then the first option will be selected, if not, the 
   #second option will be selected.
-bigfoot_2 %&gt;% 
-  mutate(summer = ifelse(season == "Summer", 1, 0)) %&gt;% select(summer, season) %&gt;% View()
-
-##case_when
-  # the case_when function allows you to complete multiple if_else statements in a single group of commands
-bigfoot_2 &lt;- bigfoot_2 %&gt;%
-  mutate(temp_cat = case_when(
-    temp_c &lt;  0 ~ "Freezing",
-    temp_c &gt;= 0 &amp; temp_c &lt; 10 ~ "Cold",
-    temp_c &gt;= 10 &amp; temp_c &lt; 20 ~ "Moderate",
-    temp_c &gt;= 20 ~ "Warm"
-    )
-  )
-
-bigfoot_2 %&gt;% 
-  count(temp_cat)
+rodents_2 %&gt;% 
+  mutate(control = ifelse(treatment == "control", 1, 0)) %&gt;% select(treatment, control) %&gt;% head()
 ```
 
 ```
-## # A tibble: 5 × 2
-##   temp_cat     n
-##   &lt;chr&gt;    &lt;int&gt;
-## 1 Cold       806
-## 2 Freezing   208
-## 3 Moderate  1204
-## 4 Warm       968
-## 5 &lt;NA&gt;      1835
+## # A tibble: 6 × 2
+##   treatment control
+##   &lt;chr&gt;       &lt;dbl&gt;
+## 1 exclosure       0
+## 2 exclosure       0
+## 3 exclosure       0
+## 4 control         1
+## 5 control         1
+## 6 control         1
 ```
+
 ---
-## Writing out data
-
-Just like you can read in data from read_csv(), you can also write out a csv file. Let's create a new file for our `bigfoot_2` data.
 
 
 ```r
-#Include the name of the object to export (bigfoot_2) and the name of the file
-write_csv(bigfoot_2, "bigfoot_2.csv")
+##case_when
+  # the case_when function allows you to complete multiple if_else statements in a single group of commands
+rodents_2 &lt;- rodents_2 %&gt;%
+  mutate(hfl_cat = case_when(
+    hfl &lt;  17 ~ "Very Small",
+    hfl &gt;= 17 &amp; hfl &lt; 22 ~ "Small",
+    hfl &gt;= 22 &amp; hfl &lt; 32 ~ "Medium",
+    hfl &gt;= 32 ~ "Large"
+    )
+  ) %&gt;% head()
+rodents_2 %&gt;% 
+  drop_na(hfl_cat) %&gt;% 
+  count(hfl_cat)
+```
+
+```
+## # A tibble: 2 × 2
+##   hfl_cat        n
+##   &lt;chr&gt;      &lt;int&gt;
+## 1 Large          2
+## 2 Very Small     1
+```
+---
+
+## Writing out data
+
+Just like you can read in data from read_csv(), you can also write out a csv file. Let's create a new file for our `rodents_2`` data.
+
+
+```r
+#Include the name of the object to export (rodents_2) and the name of the file
+write_csv(rodents_2, "rodents_2.csv")
 ```
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
