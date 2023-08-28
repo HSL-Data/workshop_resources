@@ -41,38 +41,42 @@ library(tidyverse)
 library(ggmosaic)
 library(ggthemes)
 ```
-
+---
 # Read in data
 
-We are going to use the bigfoot dataset to look at bigfoot sightings. Use the `read_csv` package to read in the data.
+We are going to use the rodents dataset to look at the differences between three different species of rodents. Use the `read_csv` package to read in the data.
 
 
 ```r
-bigfoot &lt;- read_csv("bigfoot.csv")  %&gt;% 
-  filter(season != "Unknown")
+rodents &lt;- read_csv("rodent_surveys.csv") %&gt;% 
+  drop_na(sex) %&gt;% 
+  filter(species == "DM" | species == "PE" | species == "PB") %&gt;% 
+  mutate(name = case_when(
+    species == "DM" ~ "Merriam's Kangaroo Rat",
+    species == "PB" ~ "Bailey's Pocket Mouse", 
+    species == "PE" ~ "Cactus Mouse"
+  )) %&gt;% 
+  mutate(year = as.numeric(str_sub(censusdate, 1, 4)))
 ```
 
 Let's use the `glimpse` function to look at the data that we read in. 
 
 
 ```r
-glimpse(bigfoot)
+glimpse(rodents)
 ```
 
 ```
-## Rows: 4,929
-## Columns: 11
-## $ title       [3m[38;5;246m&lt;chr&gt;[39m[23m NA, NA, "Report 6496: Bicycling student has night encounter", NA, NA, "Report 9765: Motorist and chil…
-## $ state       [3m[38;5;246m&lt;chr&gt;[39m[23m "Alabama", "Alaska", "Rhode Island", "Pennsylvania", "Oregon", "Oklahoma", "Ohio", "New York", "Nevad…
-## $ date        [3m[38;5;246m&lt;date&gt;[39m[23m NA, NA, 1974-09-20, NA, NA, 1973-09-28, 1971-08-01, 2010-09-01, 1970-09-01, NA, 2016-06-07, 2018-05-…
-## $ season      [3m[38;5;246m&lt;chr&gt;[39m[23m "Summer", "Fall", "Fall", "Summer", "Spring", "Fall", "Summer", "Fall", "Fall", "Fall", "Summer", "Sp…
-## $ precip_type [3m[38;5;246m&lt;chr&gt;[39m[23m NA, NA, NA, NA, NA, "rain", NA, NA, NA, NA, "rain", NA, "rain", NA, NA, "snow", NA, NA, NA, NA, NA, "…
-## $ number      [3m[38;5;246m&lt;dbl&gt;[39m[23m 30680, 1261, 6496, 8000, 703, 9765, 4983, 31940, 5692, 438, 55269, 59757, 751, 3339, 47215, 1757, 256…
-## $ temperature [3m[38;5;246m&lt;dbl&gt;[39m[23m NA, NA, 73.425, NA, NA, 61.425, NA, 80.810, NA, NA, 64.245, 77.700, 58.955, 17.705, NA, 7.445, 64.925…
-## $ dew_point   [3m[38;5;246m&lt;dbl&gt;[39m[23m NA, NA, 65.72, NA, NA, 51.03, NA, 67.34, 32.55, NA, 54.64, 62.77, 31.01, 9.50, NA, 0.16, 27.20, 66.09…
-## $ humidity    [3m[38;5;246m&lt;dbl&gt;[39m[23m NA, NA, 0.86, NA, NA, 0.79, NA, 0.68, 0.45, NA, 0.79, 0.61, 0.32, 0.79, NA, 0.75, 0.30, 0.89, 0.64, 0…
-## $ visibility  [3m[38;5;246m&lt;dbl&gt;[39m[23m NA, NA, 2.750, NA, NA, 10.000, NA, 6.922, 8.880, NA, 9.700, 8.250, 10.000, 9.500, NA, 10.000, 3.670, …
-## $ uv_index    [3m[38;5;246m&lt;dbl&gt;[39m[23m NA, NA, 4, NA, NA, 7, NA, 8, 8, NA, 6, 10, 6, 7, NA, 1, 9, 10, 2, 7, NA, 3, 12, 7, NA, 3, 9, 9, 5, 2,…
+## Rows: 12,091
+## Columns: 8
+## $ censusdate [3m[38;5;246m&lt;date&gt;[39m[23m 1978-01-08, 1978-01-08, 1978-01-08, 1978-01-08, 1978-01-08, 1978-01-08, 1978-0…
+## $ species    [3m[38;5;246m&lt;chr&gt;[39m[23m "DM", "DM", "DM", "DM", "DM", "DM", "DM", "DM", "DM", "DM", "DM", "DM", "DM", "…
+## $ treatment  [3m[38;5;246m&lt;chr&gt;[39m[23m "control", "control", "control", "control", "control", "control", "control", "c…
+## $ sex        [3m[38;5;246m&lt;chr&gt;[39m[23m "M", "F", "M", "M", "F", "F", "F", "M", "F", "M", "M", "M", "F", "M", "M", "M",…
+## $ hfl        [3m[38;5;246m&lt;dbl&gt;[39m[23m 36, 34, 36, 38, 36, 36, 37, 36, 34, 37, 36, 38, 39, 35, 38, 38, 35, 37, 35, NA,…
+## $ wgt        [3m[38;5;246m&lt;dbl&gt;[39m[23m 40, 37, 40, 44, 40, 38, 39, 46, 42, 39, 44, 48, 44, 39, 49, 50, 40, 46, 48, NA,…
+## $ name       [3m[38;5;246m&lt;chr&gt;[39m[23m "Merriam's Kangaroo Rat", "Merriam's Kangaroo Rat", "Merriam's Kangaroo Rat", "…
+## $ year       [3m[38;5;246m&lt;dbl&gt;[39m[23m 1978, 1978, 1978, 1978, 1978, 1978, 1978, 1978, 1978, 1978, 1978, 1978, 1978, 1…
 ```
 ---
 # Basics of ggplot2
@@ -91,15 +95,15 @@ Specifically, **ggplot2** allows you to build a plot layer-by-layer by specifyin
 
 The `ggplot` function has two required arguments: the *data* used for creating the plot, and an *aesthetic* mapping to describe how variables in said data are mapped to things we can see on the plot.
 
-First, let's lay out the plot. If we want to plot a continuous Y variable by a continuous X variable we're probably most interested in a scatter plot. Here, we're telling ggplot that we want to use the `bigfoot` dataset, and the aesthetic mapping will map `humidity` onto the x-axis and `temperature` onto the y-axis. Remember that the variable names are case sensitive! 
+First, let's lay out the plot. If we want to plot a continuous Y variable by a continuous X variable we're probably most interested in a scatter plot. Here, we're telling ggplot that we want to use the `rodents` dataset, and the aesthetic mapping will map `hfl` onto the x-axis and `wgt` onto the y-axis. Remember that the variable names are case sensitive! 
 
 
 ```r
 # The ggplot function creates an initial canvas
-ggplot(data =  bigfoot, aes(x = humidity, y = temperature))
+ggplot(data =  rodents, aes(x = hfl, y = wgt))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-4-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
 ---
 When we do that we get a blank canvas with no data showing. That's because all we've done is laid out a two-dimensional plot specifying what goes on the x and y axes, but we haven't told it what kind of geometric object to plot. The obvious choice here is a point. Check out [docs.ggplot2.org](http://docs.ggplot2.org/) to see what kind of geoms are available.
 
@@ -107,11 +111,11 @@ Add `geom_point()`
 
 
 ```r
-ggplot(data =  bigfoot, aes(x = humidity, y = temperature)) + 
+ggplot(data = rodents, aes(x = hfl, y = wgt)) + 
   geom_point()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-5-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
 ---
 Let's add some color by changing all the points to be blue. By looking at the `geom_point` function in the help menu, you can see that their are several arguments/options that you can change within the geom. This is true for every geom that we will explore today and others that you might explore on your own. 
 
@@ -123,47 +127,47 @@ The `colors()` function will provide you all of the colors that are initially av
 # ?geom_point()
 
 # Here the color = "blue" argument will make every point blue. This argument will behave differently depending on the type of geom you are using.
-ggplot(data =   bigfoot, aes(x = humidity, y = temperature)) + 
+ggplot(data = rodents, aes(x = hfl, y = wgt)) + 
   geom_point(color = "blue")
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-6-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
 ---
 Now let's change the shape of the points. `shape = 8` is an *. 
 
-&lt;img src="ggplot_shapes.png" width="200"&gt;
+![ggplot shape codes](ggplot_shapes.png)
 
 
 ```r
 # We can combine multiple arguments by using a comma
-ggplot(data =   bigfoot, aes(x = humidity, y = temperature)) + 
+ggplot(data = rodents, aes(x = hfl, y = wgt)) + 
   geom_point(color = "blue", shape = 3)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-7-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
 ---
-Instead of coloring by a static value, let's color by season (`season`). Remember that _any time_ you want to map a variable onto the plot, it must be in a call to `aes()`
+Instead of coloring by a static value, let's color by rodent name (`name`). Remember that _any time_ you want to map a variable onto the plot, it must be in a call to `aes()`
 
 
 ```r
 # Notice that color is no longer a single value (ie: blue), but the value of a given category. This will now create a different color point for each value found in a category. However, the shape argument is still outside of the aes call, making every point the same shape.
-ggplot(data =   bigfoot, aes(x = humidity, y = temperature)) + 
-  geom_point(aes(color = season))
+ggplot(data =  rodents, aes(x = hfl, y = wgt)) + 
+  geom_point(aes(color = name))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-8-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
 ---
 Let's add another layer showing a smoothed trend line. (and let's go back to the normal geom_point shape). Remember, that each new layer will go on top of the previous one, meaning that the smoothed line will go on top of the points.
 
 
 ```r
 # Use a + sign to connect together ggplot elements such as a geom.
-ggplot(data =   bigfoot, aes(x = humidity, y = temperature)) + 
-  geom_point(aes(color = season)) +
+ggplot(data = rodents, aes(x = hfl, y = wgt)) + 
+  geom_point(aes(color = name)) +
   geom_smooth()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-9-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
 ---
 Notice that `geom_smooth()` is fitting the trend line using a gam Model. We can read more about that by calling the help menu for geom_smooth
 
@@ -179,55 +183,55 @@ Let's change the method to be "lm" to fit a straight line using the `method` arg
 
 
 ```r
-ggplot(data =   bigfoot, aes(x = humidity, y = temperature)) + 
-  geom_point(aes(color = season)) +
+ggplot(data = rodents, aes(x = hfl, y = wgt)) + 
+  geom_point(aes(color = name)) +
   geom_smooth(method = "lm")
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-11-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
 ---
-Let's fit a smoothed line (allowing the default method = "auto") separately for each season
+Let's fit a smoothed line (allowing the default method = "auto") separately for each rodent species
 
 
 ```r
 # Notice that we have aesthetic mappings (aes) in both the point geom and the smooth geom.
-ggplot(data =  bigfoot, aes(x = humidity, y = temperature)) + 
-  geom_point(aes(color = season)) +
-  geom_smooth(aes(color = season))
+ggplot(data = rodents, aes(x = hfl, y = wgt)) + 
+  geom_point(aes(color = name)) +
+  geom_smooth(aes(color = name))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-12-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
 ---
 In the above code we now have three calls to `aes()`. One in the canvas layer, one in the `geom_point()` layer, and one in the `geom_smooth()` layer. 
 
-If we want ALL the layers to be colored by season, we can just specify `color = season` in the top canvas layer and all the subsequent layers will inherit that aesthetic mapping just like they inherit the x and y from the canvas layer.
+If we want ALL the layers to be colored by name, we can just specify `color = name` in the top canvas layer and all the subsequent layers will inherit that aesthetic mapping just like they inherit the x and y from the canvas layer.
 
 
 ```r
-# I've added lwd = 2 to the geom_smooth() function to create a thicker fitted line.
-ggplot(data =   bigfoot, aes(x = humidity, y = temperature, color = season)) + 
+# I've added linewidth = 2 to the geom_smooth() function to create a thicker fitted line.
+ggplot(data = rodents, aes(x = hfl, y = wgt, color = name)) + 
   geom_point() + 
-  geom_smooth(lwd = 2, se = FALSE)
+  geom_smooth(linewidth = 2, se = FALSE)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-13-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
 ---
 # Time for an exercise
-Create a scatter plot looking at the relationship between visibility and temperature
+Create a scatter plot looking at the relationship between year and wgt
 
-Color the points by season
+Color the points by rodent name
 
 Add a smoothed line that fits all of the points
 
 
 ```r
-bigfoot %&gt;% 
-  ggplot(aes(visibility, temperature)) + 
-  geom_point(aes(color = season)) + 
+rodents %&gt;% 
+  ggplot(aes(year, wgt)) + 
+  geom_point(aes(color = name)) + 
   geom_smooth(se = FALSE)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-14-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
 ---
 # Facets
 
@@ -237,105 +241,97 @@ The facet functions take a formula specifying which variables to facet by. If yo
 
 Along the way to teaching you about faceting, I'll show a strategy to build up a plot by saving layers you like to an object. This way, we can avoid having to copy-paste long lines of code.
 
-Let's start with a simple plot of `humidity`  x and `temperature` on y. 
+Let's start with a simple plot of `hfl`  x and `wgt` on y. 
 
 Let's create the canvas and then save that to object called `p`.
 
 
 ```r
-p &lt;- ggplot(bigfoot, aes(x = humidity, y = temperature))
+p &lt;- ggplot(rodents, aes(x = hfl, y = wgt))
 p + geom_point()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-15-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
 ---
-Add `geom_point()` colored darkred and semi-transparent (alpha)
+Add `geom_point()` colored green and semi-transparent (alpha)
 
 
 ```r
 # The alpha argument provides a level of transparency (1 = opaque, 0 = completely transparent). 
 # This is very useful when building several layers of geoms on top of each other.
-p + geom_point(color = "darkred", alpha = .5)
+p + geom_point(color = "green", alpha = .5)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-16-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
 ---
-We'll facet by `season` to show each season in its own plot. Notice that we use the `~` in front of `season`. `facet_wrap` uses a formula as input, and the `~` is used when creating a formula. 
+We'll facet by `name` to show each name in its own plot. Notice that we use the `~` in front of `name`. `facet_wrap` uses a formula as input, and the `~` is used when creating a formula. 
 
 
 ```r
 # You could put another category in front of the ~ to create factorial graphs
-p + geom_point(color = "darkred", alpha = .5) + 
-  facet_wrap(~season)
+p + geom_point(color = "green", alpha = .5) + 
+  facet_wrap(~name)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-17-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
-
-```r
-p + geom_point(color = "darkred", alpha = .5) + 
-  facet_wrap(uv_index~season)
-```
-
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-17-2.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-17-1.png)&lt;!-- --&gt;
 ---
-Let's add transparency to `geom_point()` using the argument `alpha`, add a `geom_smooth()` layer colored by `season` and remove the standard error bars with `se = FALSE`.
+
+```r
+p + geom_point(color = "green", alpha = .5) + 
+  facet_wrap(sex~name)
+```
+
+![](data_viz_slides_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+---
+Let's add transparency to `geom_point()` using the argument `alpha`, add a `geom_smooth()` layer colored by `name` and remove the standard error bars with `se = FALSE`.
 
 
 ```r
-p + geom_point(color = "darkred", alpha = .5) + 
-  geom_smooth(aes(color = season), se = FALSE) +
-  facet_wrap(~season)
+p + geom_point(color = "green", alpha = .5) + 
+  geom_smooth(aes(color = name), se = FALSE) +
+  facet_wrap(~name)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-18-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
 ---
 In these plots, the facet and color are redundant mappings of genre. We typically avoid redundant mappings, but there are reasons to do it (ie readability for color-blind) and in this case, I like the added color.
 
 
 ```r
-p + geom_point(aes(color = season), alpha = .5) + 
-  geom_smooth(aes(color = season), se = FALSE) +
-  facet_wrap(~season)
+p + geom_point(aes(color = name), alpha = .5) + 
+  geom_smooth(aes(color = name), se = FALSE) +
+  facet_wrap(~name)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-19-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
 ---
 # Exercise 2
 
-Create the same plot as exercise 1 (visibility vs temperature), but color and facet wrap by season and turn off standard error bars.
+Create the same plot as exercise 1 (year vs weight), but color and facet wrap by name and turn off standard error bars.
 
 
 ```r
-bigfoot %&gt;% 
-ggplot(aes(visibility, temperature)) + 
-  geom_point(aes(color = season)) + 
-  geom_smooth(aes(color = season)) + 
-  facet_wrap(~season)
+rodents %&gt;% 
+ggplot(aes(year, wgt, color = name)) + 
+  geom_point() + 
+  geom_smooth() + 
+  facet_wrap(~name)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-20-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
 ---
 # Plotting bivariate data: categorical X and continuous Y
 
-With the last example we examined the relationship between a continuous Y variable against a continuous X variable. A scatter plot was the obvious kind of data visualization. But what if we wanted to visualize a continuous Y variable against a categorical X variable? One example would be `season` and `temperature`
-
+With the last example we examined the relationship between a continuous Y variable against a continuous X variable. A scatter plot was the obvious kind of data visualization. But what if we wanted to visualize a continuous Y variable against a categorical X variable? One example would be `wgt` and `name`
 
 
 ```r
-bigfoot %&gt;% 
-ggplot(aes(x = season, y = temperature)) + geom_point()
-```
-
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-21-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-
-```r
-p &lt;- bigfoot %&gt;% 
-ggplot(aes(x = season, y = temperature))
+p &lt;- rodents %&gt;% 
+ggplot(aes(x = name, y = wgt))
 p
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-22-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
 ---
 Add points to the canvas
 
@@ -344,7 +340,7 @@ Add points to the canvas
 p + geom_point()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-23-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
 ---
 That's not terribly useful. There's a big overplotting problem, indicating that many points may be overlapping each other..
 
@@ -356,7 +352,7 @@ What if we spread things out by adding a little bit of horizontal noise (aka "ji
 p + geom_jitter()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-24-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
 ---
 Note that the little bit of horizontal noise that's added to the jitter is random. If you run that command over and over again, each time it will look slightly different. The idea is to visualize the density at each vertical position, and spreading out the points horizontally allows you to do that. 
 
@@ -367,7 +363,7 @@ Because there is still overplotting, let's add some transparency by setting the 
 p + geom_jitter(alpha = .5)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-25-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
 ---
 Probably a more common visualization is to show a box plot:
 
@@ -376,9 +372,9 @@ Probably a more common visualization is to show a box plot:
 p + geom_boxplot()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-26-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-26-1.png)&lt;!-- --&gt;
 ---
- Let's show the summary and the raw data.
+Let's show the summary and the raw data.
 
 
 ```r
@@ -387,8 +383,10 @@ p +
   geom_boxplot()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-27-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
+
 ---
+
 
 ```r
 p + 
@@ -396,7 +394,7 @@ p +
   geom_boxplot(outlier.color = NA)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-28-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
 ---
 Here, I added the jitter layer then added the boxplot layer, so the boxplot is plotted on top of the jitter layer. 
 
@@ -407,16 +405,17 @@ There's another geom that's useful here, called a violin plot. This plot does no
 p + geom_violin()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-29-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
 ---
+
 
 ```r
 p + geom_violin() + geom_jitter()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-30-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
+![](data_viz_slides_files/figure-html/unnamed-chunk-30-1.png)&lt;!-- --&gt;
 
+---
 One issue with box plots is that they always order the x axis alphabetically, unless otherwise told to do so.
 
 Most plots are much more effective if the axes are sorted in a more meaningful, informative way. To do that, we'll have to go back to our basic build of the plot again and use the `reorder()` function in our original aesthetic mapping. 
@@ -427,38 +426,40 @@ It looks like this.
 
 ```r
 # ?reorder
-p &lt;- bigfoot %&gt;% 
-  drop_na(temperature) %&gt;% 
-  ggplot(aes(x = reorder(season, temperature, FUN = median), y = temperature))
+p &lt;- rodents %&gt;% 
+  drop_na(name, wgt) %&gt;% ### The reorder function has issues with missings
+  ggplot(aes(x = reorder(name, wgt, FUN = median), y = wgt))
 p
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-31-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-31-1.png)&lt;!-- --&gt;
 
 ---
 
 ```r
 #Notice how color works with boxplots
-p + geom_boxplot(aes(color = season))
+p + geom_boxplot(aes(color = name))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-32-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-32-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 #We may want to use fill instead
-p + geom_boxplot(aes(fill = season))
+p + geom_boxplot(aes(fill = name))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-33-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-33-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 #If you wanted to break down by another factor
-p + geom_boxplot(aes(fill = as.factor(uv_index)))
+p + geom_boxplot(aes(fill = as.factor(sex)))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-34-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-34-1.png)&lt;!-- --&gt;
 ---
 # Plotting univariate continuous data
 
@@ -466,14 +467,15 @@ What if we just wanted to visualize distribution of a single continuous variable
 
 
 ```r
-# Let's investigate the distribution of the temperature variable
+# Let's investigate the distribution of the weight variable
 # set this as the canvas
-p &lt;- bigfoot %&gt;% ggplot(aes(temperature))
+p &lt;- rodents %&gt;% ggplot(aes(wgt))
 p + geom_histogram()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-35-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
 ---
+
 We change the number of bins that we have in our histograms. Generally, you want to do this utilizing prior knowledge or research.
 
 
@@ -482,72 +484,75 @@ We change the number of bins that we have in our histograms. Generally, you want
 p + geom_histogram(bins = 50)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-36-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + geom_histogram(bins = 10)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-37-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-37-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + geom_histogram(binwidth = 1)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-38-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-38-1.png)&lt;!-- --&gt;
+
 ---
-We can also color the bars by our `season` variable as we did before.
+We can also color the bars by our `name` variable as we did before.
 
 
 ```r
-p + geom_histogram(aes(color = season))
+p + geom_histogram(aes(color = name))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-39-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-39-1.png)&lt;!-- --&gt;
 ---
 Well, that is not exactly what I meant. I wanted the inside of the bars colored. That argument is fill instead of color, just like with box plots.
 
 
 ```r
-p + geom_histogram(aes(fill = season))
+p + geom_histogram(aes(fill = name))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-40-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-40-1.png)&lt;!-- --&gt;
 ---
-If you look at the help for `?geom_histogram` you'll see that by default it stacks overlapping data, so if two seasons have the same temperature, one is plotted on the bottom and the second is plotted stacked on top of the first. 
+If you look at the help for `?geom_histogram` you'll see that by default it stacks overlapping data, so if two rodents have the same weight, one is plotted on the bottom and the second is plotted stacked on top of the first. 
 This is a misleading visualization for that reason. Let's change the position argument so that each month has a baseline of 0.
 
 
 ```r
 # Here we use position = "identity"
-p + geom_histogram(aes(fill = season), position = "identity")
+p + geom_histogram(aes(fill = name), position = "identity")
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-41-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-41-1.png)&lt;!-- --&gt;
 ---
 That's better, but still not great. Let's use `alpha` to change the transparancy
 
 
 ```r
-p + geom_histogram(aes(fill = season), position = "identity", alpha = .3)
+p + geom_histogram(aes(fill = name), position = "identity", alpha = .3)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-42-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-42-1.png)&lt;!-- --&gt;
 ---
 Maybe better, but let's try faceting instead. 
 
 
 ```r
-p + geom_histogram(aes(fill = season), position = "identity") + 
-  facet_wrap(~season)
+p + geom_histogram(aes(fill = name), position = "identity") + 
+  facet_wrap(~name)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-43-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-Great!
+![](data_viz_slides_files/figure-html/unnamed-chunk-43-1.png)&lt;!-- --&gt;
 
+Great!
+---
 Let's start back at p and plot a smoothed density curve instead of a histogram. 
 
 
@@ -555,43 +560,44 @@ Let's start back at p and plot a smoothed density curve instead of a histogram.
 p + geom_density()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-44-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-44-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + geom_histogram()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-45-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-45-1.png)&lt;!-- --&gt;
 ---
-Now color that by the `season`
+Now color that by the `name`
 
 
 ```r
-p + geom_density(aes(color = season))
+p + geom_density(aes(color = name))
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-46-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-46-1.png)&lt;!-- --&gt;
 ---
 This could work for a couple of groups, but with 3 or more, it can get a bit busy. Let's facet
 
 
 ```r
-p + geom_density(aes(color = season)) +
-  facet_wrap(~season)
+p + geom_density(aes(color = name)) +
+  facet_wrap(~name)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-47-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-47-1.png)&lt;!-- --&gt;
 ---
 Change color to fill and you will see that instead of the outline being colored, the whole curve is filled
 
 
 ```r
-p + geom_density(aes(fill = season)) +
-  facet_wrap(~season)
+p + geom_density(aes(fill = name)) +
+  facet_wrap(~name)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-48-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-48-1.png)&lt;!-- --&gt;
 ---
 # Saving plots
 
@@ -599,21 +605,21 @@ There are a few ways to save ggplots. The quickest way, that works in an interac
 
 
 ```r
-ggsave(file = "bigfoot_temps.png")
+ggsave(file = "rodents_weight.png")
 ```
----
-Where did it go? You will see that it went directly into your project folder. Typically, I would prefer to have a directory structure that has my code, images, results, etc. all separated out.
 
+Where did it go? You will see that it went directly into your project folder. Typically, I would prefer to have a directory structure that has my code, images, results, etc. all separated out.
+---
 In a script, the best way to do it is to pass `ggsave()` the object containing the plot that is meant to be saved. We can also adjust things like the width, height, and resolution. `ggsave()` also recognizes the name of the file extension and saves the appropriate kind of file. Let's save a PDF.
 
 
 ```r
 # I am first going to create a single column of graphs so that each graph in the facet wrap gets its own row
 pfinal &lt;- p + 
-  geom_density(aes(fill = season)) +
-  facet_wrap(~season, ncol = 1)
+  geom_density(aes(fill = name)) +
+  facet_wrap(~name, ncol = 1)
 pfinal
-ggsave(pfinal, file = "bigfoot_temp.pdf", width = 7, height = 12)
+ggsave(pfinal, file = "rodents_weight.pdf", width = 7, height = 12)
 ```
 ---
 # Publication ready graphics
@@ -624,29 +630,29 @@ Let's keep using our density plot and add some useful aesthetic elements.
 ```r
 # create the canvas
 # add the layers and save them onto p
-p &lt;- bigfoot %&gt;% ggplot(aes(temperature)) +
-  geom_density(aes(fill = season)) +
-  facet_wrap(~season)
+p &lt;- rodents %&gt;% ggplot(aes(wgt)) +
+  geom_density(aes(fill = name)) +
+  facet_wrap(~name)
 
 p 
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-51-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-51-1.png)&lt;!-- --&gt;
 ---
 Let's add proper axes labels using labs(). Keep adding to create a title, subtitle, and better legend title (color).
 
 
 ```r
 # save the labs onto p
-p &lt;- p + labs(x = "Temperature (F)", 
+p &lt;- p + labs(x = "Weight (g)", 
          y = "Density of Values",
-         title = "Bigfoot Sightings by Temperature",
-         subtitle = "Per Season", 
-         fill = "Season")
+         title = "Rodent Weights",
+         subtitle = "For Three Species of Rodents", 
+         fill = "Rodent Name")
 p
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-52-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-52-1.png)&lt;!-- --&gt;
 ---
 The author of ggplot2, Hadley Wickham has chosen the "gray" theme as the default, but there are others that automatically make some aesthetic choices for you.
 
@@ -655,14 +661,15 @@ The author of ggplot2, Hadley Wickham has chosen the "gray" theme as the default
 p + theme_bw()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-53-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-53-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + theme_classic()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-54-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-54-1.png)&lt;!-- --&gt;
 ---
 ## Creating your own themes
 
@@ -673,14 +680,15 @@ If you wanted to, you can also customize your own plots using the `theme` functi
 #?theme
 mytheme &lt;- theme(axis.title.x = element_text(color = "red"), 
                  panel.background = element_rect(color = "orange", 
-                                                 fill = "turquoise4", 
-                                                 linetype = "longdash")
+                                               linetype = "longdash"),
+                plot.background = element_rect(fill = "skyblue"), 
+                text = element_text(face = "bold"),
+                legend.position="none"
                 )
-
 p + theme_classic() + mytheme 
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-55-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-55-1.png)&lt;!-- --&gt;
 ---
 There are packages out there that fit your plot to given themes (from TV shows, journals, etc). One that I find useful is the `ggthemes` package
 
@@ -689,101 +697,142 @@ There are packages out there that fit your plot to given themes (from TV shows, 
 p + theme_fivethirtyeight()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-56-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-56-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + theme_economist()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-57-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-57-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + theme_excel_new()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-58-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-58-1.png)&lt;!-- --&gt;
 ---
 Sometimes you may want to go outside of the colors that ggplot provides for you when filling in histograms, coloring points, etc. Fortunately, plenty of tools are provided to customize these color sets.
 
 
 ```r
 #colors()
+
 p + scale_fill_colorblind()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-59-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-59-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + scale_fill_viridis_d()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-60-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-60-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + scale_fill_brewer(palette = "Greens")
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-61-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-61-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
 p + scale_fill_brewer(palette = "Set1")
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-62-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-62-1.png)&lt;!-- --&gt;
+
+---
 
 ```r
 #?scale_fill_brewer()
+
+p + scale_fill_manual(values = c("purple", "black", "gold"))
 ```
+
+![](data_viz_slides_files/figure-html/unnamed-chunk-63-1.png)&lt;!-- --&gt;
+
 ---
 
 ```r
-p + scale_fill_manual(values = c("purple", "black", "gold", "green"))
-```
-
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-63-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-
-```r
-bigfoot %&gt;% ggplot(aes(temperature, humidity, color = temperature)) +
+rodents %&gt;% ggplot(aes(hfl, wgt, color = hfl)) +
   geom_point(size = 4) +
   scale_color_gradient(low  = "blue", high = "red")
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-64-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
+![](data_viz_slides_files/figure-html/unnamed-chunk-64-1.png)&lt;!-- --&gt;
+
+--- 
+
 ## Plotting Multiple Datasets
 
 Oftentimes you may need to combine datasets into one plot. This can be done by resetting the data option within the `geom_` functions.
 
 
 ```r
-bigfoot_focus &lt;- bigfoot %&gt;% 
-  mutate(year = lubridate::year(date)) %&gt;% 
-  group_by(year, season) %&gt;% 
-  summarize(number_of_sightings = n()) %&gt;% filter(year &gt;= 1960 &amp; season != "Unknown")
+## This dataframe will create a new column saying
+## whether a rodent is a mouse or rat
+rodents_extra &lt;- read_csv("desert_rodents.csv") %&gt;% 
+  mutate(rodent_type =if_else(str_detect(commonname, "rat"), "Rat", "Mouse"))
+  
+# Let's create an object that only holds observations 
+# for a specific species
+fav_rodent &lt;- rodents_extra %&gt;% 
+  filter(commonname == "Merriam's kangaroo rat") 
+```
+--- 
 
-fav_season &lt;- bigfoot_focus %&gt;% 
-  filter(season == "Summer")  ## Change this line ##
 
+```r
+#The following code creates a somewhat complex plot.
 ggplot() + 
-  geom_point(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
-  geom_line(data = bigfoot_focus, aes(x = year, y = number_of_sightings, color = season)) +
-  geom_point(data = fav_season, 
-             aes(x = year, y = number_of_sightings),
-             color = "red", size = 3) +
-  geom_line(data = fav_season, 
-             aes(x = year, y = number_of_sightings),
-             color = "red", size = 1) + 
-  theme_classic() + labs(y = "Number of Bigfoot Sightings", x = "Year of Sighting") 
+  geom_boxplot(data = rodents_extra, aes(x = rodent_type, y = meanhfl, fill = rodent_type)) +
+  geom_point(data = fav_rodent, 
+             aes(x = rodent_type, y = meanhfl),
+             color = "blue", size = 5) +
+  theme_classic() + labs(y = "Mean Hindfoot Length", x = "Rodent Type", fill = "Rodent Type") 
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-65-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-66-1.png)&lt;!-- --&gt;
+
 ---
+
+## Multiple Categorical Variables
+
+One of the more difficult type of plots to create is one that has multiple categorical variables. There are not too many visualizations that stand out and that are better than a simple table. One plot that works for categorical variables is a mosaic plot. A mosaic plot shows the proportion of the overall data that each value in a category takes up.
+
+
+```r
+## MOSAIC PLOTS
+# ?ggmosaic::geom_mosaic()
+rodents %&gt;% 
+  ggplot() +
+  geom_mosaic(aes(x = product(name, treatment)))
+```
+
+![](data_viz_slides_files/figure-html/unnamed-chunk-67-1.png)&lt;!-- --&gt;
+
+---
+
+
+```r
+rodents %&gt;% 
+  ggplot() +
+  geom_mosaic(aes(x = product(name, treatment), fill = sex))
+```
+
+![](data_viz_slides_files/figure-html/unnamed-chunk-68-1.png)&lt;!-- --&gt;
+
+---
+
 ## Alternative to a box plot
 
 Box plots are used quite often, but they are not always the best visualization for the job. They illustrate the median and IQR of the data, while most often we are worried about the mean and the spread of the data.
@@ -793,81 +842,36 @@ The following plot shows the spread of the data, provides summary information fo
 
 ```r
 # plot results *A better way
-bigfoot %&gt;% 
-  group_by(season) %&gt;% 
-  summarize(min = min(visibility, na.rm = TRUE),
-            max = max(visibility, na.rm = TRUE),
-            visibility = mean(visibility, na.rm = TRUE)) %&gt;% 
-  ggplot(aes(season, visibility, color = season)) + 
-  geom_pointrange(aes(ymin = min, ymax = max)) +
-  geom_jitter(data = bigfoot, aes(season, visibility), alpha = .3)
+rodents %&gt;% 
+  group_by(name) %&gt;% 
+  drop_na(wgt) %&gt;% 
+  summarize(sd = sd(wgt),
+            wgt = mean(wgt)) %&gt;% 
+  mutate(lowerBound = wgt - sd,
+         upperBound = wgt + sd) %&gt;% 
+  ggplot(aes(name, wgt, color = name)) + 
+  geom_errorbar(aes(ymin = lowerBound, ymax = upperBound), size = 2, width = .3) +
+  geom_point(size = 6) + 
+  geom_jitter(data = rodents, aes(name, wgt), alpha = .1)
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-66-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-69-1.png)&lt;!-- --&gt;
 ---
-Adding error bars to bar charts is also a better way of showing off your data.
+## Bar Charts
 
 
 ```r
-bigfoot %&gt;%  
-  ggplot(aes(season, temperature, fill = season)) + geom_col()
-```
-
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-67-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-
-```r
-bigfoot %&gt;%
-  group_by(season) %&gt;% 
-  summarize(temp_mean = mean(temperature, na.rm = TRUE),
-            sd = sd(temperature, na.rm = TRUE)) %&gt;% 
-  mutate(lowerBound = temp_mean - sd,
-         upperBound = temp_mean + sd) %&gt;% 
-ggplot(aes(temp_mean, reorder(season, -temp_mean), fill = season)) + geom_col(alpha = .5) + coord_flip() + geom_errorbar(aes(xmin = lowerBound, xmax = upperBound), size = 1, alpha = .5)
-```
-
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-68-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-
-```r
-bigfoot %&gt;%
-  filter(str_detect(state, "I")) %&gt;% 
-  group_by(season, state) %&gt;% 
-  summarize(temp_mean = mean(temperature, na.rm = TRUE),
-            sd = sd(temperature, na.rm = TRUE)) %&gt;%  ggplot(aes(temp_mean, fill = season, y = state)) + geom_bar(alpha = .5, position = "stack", stat = "identity")
-```
-
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-69-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-
-```r
-library(gapminder)
-gapminder %&gt;%
-  filter(year &gt; 1990) %&gt;%
+rodents %&gt;%
+  filter(year &gt; 2019) %&gt;%
   mutate(year = as.factor(year)) %&gt;% 
-  group_by(continent, year) %&gt;% 
-  summarize(lifeExp_mean = mean(lifeExp, na.rm = TRUE),
-            sd = sd(lifeExp, na.rm = TRUE))%&gt;% 
-  ggplot(aes(lifeExp_mean, fill = year, y = continent)) + 
-  geom_bar(alpha = .5, position = "stack", stat = "identity")
+  group_by(name, year) %&gt;% 
+  summarize(wgt_mean = mean(wgt, na.rm = TRUE),
+            sd = sd(wgt, na.rm = TRUE))%&gt;% 
+  ggplot(aes(wgt_mean, fill = year, y = name)) + 
+  geom_bar(alpha = .5, position = "stack", stat = "identity") + coord_flip()
 ```
 
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-70-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-
-```r
-gapminder %&gt;%
-  filter(year &gt; 1990) %&gt;%
-  mutate(year = as.factor(year)) %&gt;% 
-  group_by(continent, year) %&gt;% 
-  summarize(lifeExp_mean = mean(lifeExp, na.rm = TRUE),
-            sd = sd(lifeExp, na.rm = TRUE)) %&gt;% 
-  ggplot(aes(lifeExp_mean, fill = year, y = continent)) + 
-  geom_col(alpha = .5, position = "stack") + 
-  coord_flip()
-```
-
-&lt;img src="data_viz_slides_files/figure-html/unnamed-chunk-71-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+![](data_viz_slides_files/figure-html/unnamed-chunk-70-1.png)&lt;!-- --&gt;
 ---
 The website below shows a whole bunch of different ways that you can use ggplot:
 
@@ -876,11 +880,9 @@ The website below shows a whole bunch of different ways that you can use ggplot:
 # Learn More ggplot2
 - Chapters 3, 7 and 28 in [R 4 Data Science](http://r4ds.had.co.nz/)
 - [R Graphics Cookbook](http://www.cookbook-r.com/Graphs/)
-- [ggplot2 cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf)
 - [viridis color scale](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
 - [ggthemes package](https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/)
 - [Color in R](http://www.sthda.com/english/wiki/colors-in-r)
- 
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
