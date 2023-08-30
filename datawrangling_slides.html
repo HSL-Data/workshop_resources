@@ -23,7 +23,6 @@ class: left, middle, inverse, title-slide
 
 
 
-
 Data analysis involves a large amount of [janitorwork](http://www.nytimes.com/2014/08/18/technology/for-big-data-scientists-hurdle-to-insights-is-janitor-work.html) -- munging and cleaning data to facilitate downstream data analysis. In fact, data scientists say that around [80%](https://www.infoworld.com/article/3228245/data-science/the-80-20-data-science-dilemma.html) of their time is taken up by data cleaning tasks compared to just 20% for the actual analyses.
 
 Our goal will be to produce "tidy data" that we can then use to derive some insights. [Tidy data](https://vita.had.co.nz/papers/tidy-data.pdf) is defined as:
@@ -33,15 +32,12 @@ Our goal will be to produce "tidy data" that we can then use to derive some insi
 
 To transform the data into tidy data will take different steps depending on the nature of the untidyness. Hadley Wickham, who works for RStudio, says "tidy datasets are all alike but every messy dataset is messy in its own way."
 
-This lesson demonstrates techniques for data cleaning and manipulation using the split-apply-combine strategy. We will make use of the tidyr package to clean the data. The dplyr package will help us effectively manipulate and conditionally compute summary statistics over subsets of data, while the stringr package will help us interact with string data. 
-
-**This lesson assumes a [basic familiarity with R](r-basics.html) and [data frames](r-dataframes.html).**
-
 **Recommended Resources** 
 1. The [**_R for Data Science_ book**](http://r4ds.had.co.nz/tibbles.html) is a fabulous resource for learning to do data science in R.
 
 2. There are cheatsheets available on the [RStudio website](https://www.rstudio.com/resources/cheatsheets/) for **tidyr**, **dplyr**, and **stringr**, among others. They are excellent quick reference guides for what we will learn today.
 ---
+
 ### Set up data
 
 We need to load the readr, dplyr, tidyr, and stringr packages. All of these packages are contained in the tidyverse megapackage. Let's load those packages now - hopefully you have already installed them. 
@@ -51,93 +47,118 @@ We need to load the readr, dplyr, tidyr, and stringr packages. All of these pack
 #install.packages("tidyverse")
 # Load packages
 library(tidyverse)
-library(lubridate)
 ```
----
-The purpose of our class today is to figure out the relationship between bigfoot sightings and the production of beer over time. The problem is that we do not have a single dataset with all of the variables that we will need. To get this dataset, we need to combine multiple disparate datasets.
+
+The purpose of our class today is to figure out the relationship between rodent weights in the Arizona Desert and temperature/precipitation over time. The problem is that we do not have a single dataset with all of the variables that we will need. To get this dataset, we need to combine multiple disparate datasets.
 
 
 ```r
-# Read in original datasets
-# bigfoot : A data set looking at bigfoot sightings
-# across time, season, and state
-bigfoot &lt;-  readr::read_csv('bigfoot.csv') %&gt;%
- mutate(year = lubridate::year(date))
+## desert_rodents contains summed up information for various 
+## rodent species. 
+species &lt;- read_csv("desert_rodents.csv") %&gt;% 
+  select(species:granivore) %&gt;% 
+  mutate(species = if_else(is.na(species), "NA", species))
 
-# bigfoot_counts : A dataset with count of 
-# bigfoot sightings across time, county and state
-bigfoot_counts &lt;- readr::read_csv("bigfoot_season_count.csv")
+## The surveys data contains individual rodent information
+## We will be getting this data from the tidy tuesday github
+## site directly
+surveys &lt;- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-05-02/surveys.csv') %&gt;% 
+  select(censusdate, treatment, species, sex, hfl, wgt) %&gt;% 
+  mutate(species = if_else(is.na(species), "NA", species))
 
-# beer_states: A dataset looking at beer production across
-# states and time
-beer_states &lt;- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/beer_states.csv') %&gt;% 
-  filter(state != "total")
+## This weather data is taken from the Portal project and 
+## grabs mean temperatures and precipitation over time.
+weather &lt;- read_csv("weather_data.csv")
 ```
 ---
 
+
 ```r
-View(bigfoot)
 # Display the data
-glimpse(bigfoot)
+glimpse(species)
 ```
 
 ```
-## Rows: 5,021
-## Columns: 12
-## $ title       &lt;chr&gt; NA, NA, "Report 6496: Bicycling student has night encounte…
-## $ state       &lt;chr&gt; "Alabama", "Alaska", "Rhode Island", "Pennsylvania", "Oreg…
-## $ date        &lt;date&gt; NA, NA, 1974-09-20, NA, NA, 1973-09-28, 1971-08-01, 2010-…
-## $ season      &lt;chr&gt; "Summer", "Fall", "Fall", "Summer", "Spring", "Fall", "Sum…
-## $ precip_type &lt;chr&gt; NA, NA, NA, NA, NA, "rain", NA, NA, NA, NA, "rain", NA, "r…
-## $ number      &lt;dbl&gt; 30680, 1261, 6496, 8000, 703, 9765, 4983, 31940, 5692, 438…
-## $ temperature &lt;dbl&gt; NA, NA, 73.425, NA, NA, 61.425, NA, 80.810, NA, NA, 64.245…
-## $ dew_point   &lt;dbl&gt; NA, NA, 65.72, NA, NA, 51.03, NA, 67.34, 32.55, NA, 54.64,…
-## $ humidity    &lt;dbl&gt; NA, NA, 0.86, NA, NA, 0.79, NA, 0.68, 0.45, NA, 0.79, 0.61…
-## $ visibility  &lt;dbl&gt; NA, NA, 2.750, NA, NA, 10.000, NA, 6.922, 8.880, NA, 9.700…
-## $ uv_index    &lt;dbl&gt; NA, NA, 4, NA, NA, 7, NA, 8, 8, NA, 6, 10, 6, 7, NA, 1, 9,…
-## $ year        &lt;dbl&gt; NA, NA, 1974, NA, NA, 1973, 1971, 2010, 1970, NA, 2016, 20…
-```
-
-```r
-glimpse(bigfoot_counts)
-```
-
-```
-## Rows: 3,565
-## Columns: 7
-## $ county_state &lt;chr&gt; "Adams County;Idaho", "Adams County;Idaho", "Adams County…
-## $ year         &lt;dbl&gt; 1990, 2009, 1972, 1985, 2012, 2003, 2006, 2011, 2011, 201…
-## $ Fall         &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
-## $ Spring       &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
-## $ Summer       &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, 1, 1, 1, NA, NA, NA, NA, …
-## $ Unknown      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
-## $ Winter       &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
-```
-
-```r
-glimpse(beer_states)
-```
-
-```
-## Rows: 1,836
+## Rows: 21
 ## Columns: 4
-## $ state   &lt;chr&gt; "AK", "AK", "AK", "AK", "AK", "AK", "AK", "AK", "AK", "AK", "A…
-## $ year    &lt;dbl&gt; 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 20…
-## $ barrels &lt;dbl&gt; 2067.69, 2263.65, 1929.15, 2251.02, 2312.43, 2155.60, 2114.97,…
-## $ type    &lt;chr&gt; "On Premises", "On Premises", "On Premises", "On Premises", "O…
+## $ species        &lt;chr&gt; "BA", "PB", "PH", "PI", "PP", "DM", "DO", "DS", "NA", "…
+## $ scientificname &lt;chr&gt; "Baiomys taylori", "Chaetodipus baileyi", "Chaetodipus …
+## $ commonname     &lt;chr&gt; "Northern pygmy mouse", "Bailey's pocket mouse", "Hispi…
+## $ granivore      &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0…
+```
+
+```r
+glimpse(surveys)
+```
+
+```
+## Rows: 28,364
+## Columns: 6
+## $ censusdate &lt;date&gt; 1978-01-08, 1978-01-08, 1978-01-08, 1978-01-08, 1978-01-08…
+## $ treatment  &lt;chr&gt; "exclosure", "exclosure", "exclosure", "control", "control"…
+## $ species    &lt;chr&gt; "OL", "NA", "PF", "OT", "DM", "DM", "DS", "DM", "DS", "OL",…
+## $ sex        &lt;chr&gt; NA, NA, "M", NA, "M", "F", "F", "M", "M", NA, NA, "M", "F",…
+## $ hfl        &lt;dbl&gt; NA, NA, 15, NA, 36, 34, 47, 36, 49, NA, NA, 38, 36, 50, 51,…
+## $ wgt        &lt;dbl&gt; NA, NA, 7, NA, 40, 37, 117, 40, 132, NA, NA, 44, 40, 126, 1…
+```
+
+```r
+glimpse(weather)
+```
+
+```
+## Rows: 44
+## Columns: 25
+## $ year              &lt;dbl&gt; 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988…
+## $ meantemp_Jan      &lt;dbl&gt; 5.512903, 4.335484, 4.545161, 2.712903, 4.167742, 1.…
+## $ meantemp_Feb      &lt;dbl&gt; 7.189655, 8.528571, 7.400000, 7.488889, 7.582759, 5.…
+## $ meantemp_Mar      &lt;dbl&gt; 10.267742, 9.835484, 12.400000, 10.409677, 13.693548…
+## $ meantemp_Apr      &lt;dbl&gt; 15.91667, 18.54333, 18.62000, 13.27333, 17.13000, 17…
+## $ meantemp_May      &lt;dbl&gt; 21.78710, 22.47667, 22.27419, 21.66774, 25.83871, 22…
+## $ meantemp_Jun      &lt;dbl&gt; 29.87333, 28.63333, 28.18333, 27.11333, 24.44333, 27…
+## $ meantemp_Jul      &lt;dbl&gt; 25.52581, 23.97742, 25.81290, 25.49355, 23.81290, 25…
+## $ meantemp_Aug      &lt;dbl&gt; 23.58710, 23.89355, 23.75806, 24.00968, 22.45484, 24…
+## $ meantemp_Sep      &lt;dbl&gt; 19.50000, 19.29333, 21.26333, 21.23448, 20.24667, 18…
+## $ meantemp_Oct      &lt;dbl&gt; 11.86774, 13.51290, 14.61935, 13.85806, 11.64516, 13…
+## $ meantemp_Nov      &lt;dbl&gt; 5.400000, 7.443333, 6.993333, 7.296667, 6.200000, 7.…
+## $ meantemp_Dec      &lt;dbl&gt; 3.6096774, 4.7806452, 2.0290323, 5.4838710, 4.412903…
+## $ precipitation_Jan &lt;dbl&gt; 15.240, 30.226, 25.654, 6.364, 25.700, 22.104, 2.032…
+## $ precipitation_Feb &lt;dbl&gt; 30.226, 10.668, 10.668, 24.892, 0.000, 35.814, 24.89…
+## $ precipitation_Mar &lt;dbl&gt; 5.080, 34.036, 21.590, 32.766, 0.000, 9.398, 33.288,…
+## $ precipitation_Apr &lt;dbl&gt; 0.508, 10.414, 4.572, 9.398, 3.556, 26.162, 0.000, 1…
+## $ precipitation_May &lt;dbl&gt; 0.508, 3.048, 10.668, 0.254, 2.540, 0.000, 5.842, 9.…
+## $ precipitation_Jun &lt;dbl&gt; 10.922, 77.724, 4.318, 0.000, 21.336, 38.608, 13.462…
+## $ precipitation_Jul &lt;dbl&gt; 60.706, 81.280, 33.020, 88.900, 39.878, 93.980, 68.3…
+## $ precipitation_Aug &lt;dbl&gt; 54.102, 15.494, 72.644, 4.572, 78.486, 81.280, 62.99…
+## $ precipitation_Sep &lt;dbl&gt; 58.674, 56.134, 66.802, 128.868, 23.368, 71.120, 40.…
+## $ precipitation_Oct &lt;dbl&gt; 1.778, 25.146, 0.000, 89.408, 55.880, 106.426, 62.73…
+## $ precipitation_Nov &lt;dbl&gt; 14.478, 1.016, 67.056, 45.720, 18.796, 12.192, 6.096…
+## $ precipitation_Dec &lt;dbl&gt; 2.286, 33.528, 140.678, 27.432, 78.740, 7.620, 11.17…
 ```
 ---
 ## Separate &amp; Unite
 
 
 ```r
-bigfoot_counts
+surveys %&gt;% head(6)
 ```
 
-In looking at the output of the `bigfoot_counts` dataset, we have some work to do to tidy the data for analysis. 
+```
+## # A tibble: 6 × 6
+##   censusdate treatment species sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 exclosure OL      &lt;NA&gt;     NA    NA
+## 2 1978-01-08 exclosure NA      &lt;NA&gt;     NA    NA
+## 3 1978-01-08 exclosure PF      M        15     7
+## 4 1978-01-08 control   OT      &lt;NA&gt;     NA    NA
+## 5 1978-01-08 control   DM      M        36    40
+## 6 1978-01-08 control   DM      F        34    37
+```
 
-One of the first problems I see is that there are multiple pieces of data encoded into the column called `county_state`. Luckily, the data are separated neatly by `;`. Let's use the separate function from the tidyr package to create new columns from the original `county_state` column.
+In looking at the output of the `surveys` dataset, we have some work to do to tidy the data for analysis. 
 
+One of the first problems I see is that there are multiple pieces of data encoded into the column called `censusdate`. We can work with date data using the `lubridate` package, but we are going to try it out a different way. To do this, we luckily have data separated neatly by `-`. Let's use the `separate` function from the tidyr package to create new columns from the original `censusdate` column.
+---
 # Separate
 
 The `separate` function is used to create multiple columns from a single column. For the `separate` function you simply need the dataset, the column you want to separate into multiple columns, the name of the new columns, and the means by which the column is separated. 
@@ -145,33 +166,75 @@ The `separate` function is used to create multiple columns from a single column.
 
 ```r
 #?separate
-#county_state  in the bigfoot_counts dataset has 2 pieces of information 
-#(county;state)
+#censusdate has 3 pieces of information 
+#(year-month-day)
 
-bigfoot_counts %&gt;% 
-  separate(col = county_state, into = c("county", "state"), sep = ";")
+surveys %&gt;% 
+  separate(col = censusdate, into = c("year", "month", "day"), sep = "-") %&gt;% head(6)
 ```
 
-Notice that our original variable `county_state` no longer appears. This change is good, but so far is only in the console. The original dataframe is still unchanged. 
+```
+## # A tibble: 6 × 8
+##   year  month day   treatment species sex     hfl   wgt
+##   &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978  01    08    exclosure OL      &lt;NA&gt;     NA    NA
+## 2 1978  01    08    exclosure NA      &lt;NA&gt;     NA    NA
+## 3 1978  01    08    exclosure PF      M        15     7
+## 4 1978  01    08    control   OT      &lt;NA&gt;     NA    NA
+## 5 1978  01    08    control   DM      M        36    40
+## 6 1978  01    08    control   DM      F        34    37
+```
+
+---
+
+Notice that our original variable `censusdate` no longer appears. This change may be what we want, but so far it is only in the console. The original dataframe is still unchanged. 
 
 
 ```r
-bigfoot_counts
+surveys %&gt;% head(6)
 ```
----
-Let's keep the change created by the `separate()` function by saving original with separate back into original
+
+```
+## # A tibble: 6 × 6
+##   censusdate treatment species sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 exclosure OL      &lt;NA&gt;     NA    NA
+## 2 1978-01-08 exclosure NA      &lt;NA&gt;     NA    NA
+## 3 1978-01-08 exclosure PF      M        15     7
+## 4 1978-01-08 control   OT      &lt;NA&gt;     NA    NA
+## 5 1978-01-08 control   DM      M        36    40
+## 6 1978-01-08 control   DM      F        34    37
+```
+
+Let's keep the change created by the `separate()` function by saving the new dataset and also by keeping the original variable
 
 
 ```r
-bigfoot_c &lt;- bigfoot_counts %&gt;% 
-  separate(col = county_state, into = c("county", "state"), sep = ";")
+## We are also going to use the remove = FALSE option to keep the 
+## censusdate column
+surveys_edit &lt;- surveys %&gt;% 
+  separate(col = censusdate, into = c("year", "month", "day"), sep = "-", remove = FALSE)
 
-#Make sure to look at the variable types after a separate, they can often
-#show everything as character/string/factor, when you would expect it to 
-#be numeric
-bigfoot_c
+#Make sure to look at the variable types after a separate, 
+#they can often show everything as character/string/factor, 
+#when you would expect it to be numeric, ie: month, day, year here.
+surveys_edit %&gt;% head(6)
 ```
+
+```
+## # A tibble: 6 × 9
+##   censusdate year  month day   treatment species sex     hfl   wgt
+##   &lt;date&gt;     &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 1978-01-08 1978  01    08    exclosure OL      &lt;NA&gt;     NA    NA
+## 2 1978-01-08 1978  01    08    exclosure NA      &lt;NA&gt;     NA    NA
+## 3 1978-01-08 1978  01    08    exclosure PF      M        15     7
+## 4 1978-01-08 1978  01    08    control   OT      &lt;NA&gt;     NA    NA
+## 5 1978-01-08 1978  01    08    control   DM      M        36    40
+## 6 1978-01-08 1978  01    08    control   DM      F        34    37
+```
+
 ---
+
 If the separator was not as neat as this, you can input any [regular expression](https://en.wikipedia.org/wiki/Regular_expression) into the separator argument. 
 
 ## Resources for Regular Expressions
@@ -206,18 +269,7 @@ separate(data = new_df, col = a, into = c("Field", "Age"), sep = "#SEP#")
 
 ```r
 new_df &lt;- tibble(a = c("Education#SEP#52", "Business#IFJ#43"))
-new_df
-```
 
-```
-## # A tibble: 2 × 1
-##   a               
-##   &lt;chr&gt;           
-## 1 Education#SEP#52
-## 2 Business#IFJ#43
-```
-
-```r
 separate(data = new_df, col = a, into = c("Field", "Age"), sep = "#[A-Z]{3}#")
 ```
 
@@ -229,173 +281,169 @@ separate(data = new_df, col = a, into = c("Field", "Age"), sep = "#[A-Z]{3}#")
 ## 2 Business  43
 ```
 ---
+
 # Unite
 
 Unite is essentially the opposite of separate. It acts much like paste would work, where it combines two (or more) separate columns into one while separating with a specific value
 
 
 ```r
-# Let's pretend we want to unite the two county and state
-# together from bigfoot_c
-bigfoot_c %&gt;% unite(col = county_state, c("county", "state"), sep = ", ") %&gt;% select(county_state)
+# Let's pretend we want to unite the date columns back together in 
+# a different format
+surveys_edit %&gt;% 
+  unite(col = date, c("month", "day", "year"), sep = "/", remove = FALSE) %&gt;% 
+  select(date, month, day, year)
 ```
 
 ```
-## # A tibble: 3,565 × 1
-##    county_state                    
-##    &lt;chr&gt;                           
-##  1 Adams County, Idaho             
-##  2 Adams County, Idaho             
-##  3 Adams County, Illinois          
-##  4 Alachua County, Florida         
-##  5 Alachua County, Florida         
-##  6 Alcona County, Michigan         
-##  7 Alcona County, Michigan         
-##  8 Alcona County, Michigan         
-##  9 Alexander County, Illinois      
-## 10 Alexander County, North Carolina
-## # … with 3,555 more rows
+## # A tibble: 28,364 × 4
+##    date       month day   year 
+##    &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
+##  1 01/08/1978 01    08    1978 
+##  2 01/08/1978 01    08    1978 
+##  3 01/08/1978 01    08    1978 
+##  4 01/08/1978 01    08    1978 
+##  5 01/08/1978 01    08    1978 
+##  6 01/08/1978 01    08    1978 
+##  7 01/08/1978 01    08    1978 
+##  8 01/08/1978 01    08    1978 
+##  9 01/08/1978 01    08    1978 
+## 10 01/08/1978 01    08    1978 
+## # … with 28,354 more rows
 ```
+
 ---
 
 ### Exercise ###
 
-1. Use Separate to separate the a column in `new_df` into two separate columns.
+1. Use Separate to separate the a column in `new_df` into separate columns.
 
-2. Reunite the two columns and use a separator of your choice.
+2. Reunite the columns and use a separator of your choice.
 
 
 ```r
-new_df &lt;- tibble(a = c("OnePiece--21", "TwoPiece--25"))
+new_df &lt;- tibble(a = c("112 Prince Henry Street, Charlottesville, VA", "5123 Miller Street, Richmond, VA"))
 new_df
 ```
 
 ```
 ## # A tibble: 2 × 1
-##   a           
-##   &lt;chr&gt;       
-## 1 OnePiece--21
-## 2 TwoPiece--25
+##   a                                           
+##   &lt;chr&gt;                                       
+## 1 112 Prince Henry Street, Charlottesville, VA
+## 2 5123 Miller Street, Richmond, VA
 ```
 
 ```r
 #1. 
-n &lt;- new_df %&gt;% separate(col = a, into = c("var", "value"), sep = "--")
+n &lt;- new_df %&gt;% separate(col = a, into = c("street", "city", "state"), sep = ", ")
 n
 ```
 
 ```
-## # A tibble: 2 × 2
-##   var      value
-##   &lt;chr&gt;    &lt;chr&gt;
-## 1 OnePiece 21   
-## 2 TwoPiece 25
+## # A tibble: 2 × 3
+##   street                  city            state
+##   &lt;chr&gt;                   &lt;chr&gt;           &lt;chr&gt;
+## 1 112 Prince Henry Street Charlottesville VA   
+## 2 5123 Miller Street      Richmond        VA
 ```
 
 ```r
 #2. 
-unite(n, new_var, c("var", "value"), sep = "WHATEVER")
+unite(n, new_var, c("street", "city", "state"), sep = "--##--")
 ```
 
 ```
 ## # A tibble: 2 × 1
-##   new_var           
-##   &lt;chr&gt;             
-## 1 OnePieceWHATEVER21
-## 2 TwoPieceWHATEVER25
+##   new_var                                             
+##   &lt;chr&gt;                                               
+## 1 112 Prince Henry Street--##--Charlottesville--##--VA
+## 2 5123 Miller Street--##--Richmond--##--VA
 ```
 ---
 # Reshaping - pivot_wider &amp; pivot_longer
 
-The next problem we will tackle is reshaping the dataframe. Notice that we have several rows that seem to be encoding beer production information across different years and type for the same state when we look at the `beer_states` dataset. At times, we want the dataset to be set up like this, but to be able to combine it to our other datasets, we will need to reshape.
+The next problem we will tackle is reshaping the dataframe. Notice that we have several columns that seem to be representing the month and type of weather reading at a year level. At times, we want the dataset to be set up like this, but to be able to combine it to our other datasets, we will need to reshape.
 
 
 ```r
-beer_states %&gt;% 
-  arrange(state, year)
+names(weather)
 ```
 
-The `type` column is repeated across the states for each year. This longitudinal/panel style of dataset is considered a `long` dataset, where you have many observations and few columns/variables. This set up is nice for looking at time series or repeated measures. However, we want to turn it into a `wide` dataset, where there are more variables and fewer observations. 
+```
+##  [1] "year"              "meantemp_Jan"      "meantemp_Feb"     
+##  [4] "meantemp_Mar"      "meantemp_Apr"      "meantemp_May"     
+##  [7] "meantemp_Jun"      "meantemp_Jul"      "meantemp_Aug"     
+## [10] "meantemp_Sep"      "meantemp_Oct"      "meantemp_Nov"     
+## [13] "meantemp_Dec"      "precipitation_Jan" "precipitation_Feb"
+## [16] "precipitation_Mar" "precipitation_Apr" "precipitation_May"
+## [19] "precipitation_Jun" "precipitation_Jul" "precipitation_Aug"
+## [22] "precipitation_Sep" "precipitation_Oct" "precipitation_Nov"
+## [25] "precipitation_Dec"
+```
+
 ---
-We will use the `pivot_wider` function to change our dataset from `long` to `wide`. Conversely the `pivot_longer` function changes a dataset from `wide` to `long`.
+
+The columns here represent a month and reading value. This may be useful at times, but to match up to our previous datasets, we want our data to be at the year/month level instead of the year level. Our `weather` dataset is currently in a wide format, where we have more variables and fewer observations. We want to turn this dataset into more of a long or longitudinal dataset, where you have many observations and few columns/variables. This set up is nice for looking at time series or repeated measures. 
+
+We will use the `pivot_longer` function changes a dataset from `wide` to `long`.
+Conversely the `pivot_wider` function to change our dataset from `long` to `wide`. 
+
+`pivot_longer()` is the inverse of `pivot_wider`. With `pivot_longer()` you tell R the columns that you want to gather and then the name for the new column you are creating. Notice here the `:` operator which basically means "through". The `weather` dataset is an example of a wide dataset. So here we are grabbing all variables from `meantemp_Jan` through `precipitation_Dec`.
+
+
+```r
+#?pivot_longer
+weather_long &lt;- weather %&gt;% 
+  pivot_longer(cols = meantemp_Jan:precipitation_Dec)  
+```
+--- 
 
 After the dataframe, `pivot_wider()` needs 2 other arguments. The first one is where you are getting your new variable names from. Since you will be creating several variables, R needs a way to tell how to name them. The second argument, below tells us where to get the values for the new variables. 
 
 
 ```r
-#?pivot_wider
-names(beer_states)
-beer_states  %&gt;% 
-  pivot_wider(names_from = type, values_from = barrels)
+weather_final &lt;- weather_long %&gt;% 
+  separate(name, into = c("reading_type", "month"), sep = "_") %&gt;% 
+  pivot_wider(names_from = "reading_type", values_from = "value")
 
-beer_wide &lt;- beer_states  %&gt;% 
-  pivot_wider(names_from = type, values_from = barrels)
+weather_long %&gt;% 
+  separate(name, into = c("reading_type", "month"), sep = "_") %&gt;% 
+  pivot_wider(names_from = "reading_type", values_from = "value", names_prefix = "test_") %&gt;% head(6)
+```
+
+```
+## # A tibble: 6 × 4
+##    year month test_meantemp test_precipitation
+##   &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;              &lt;dbl&gt;
+## 1  1980 Jan            5.51             15.2  
+## 2  1980 Feb            7.19             30.2  
+## 3  1980 Mar           10.3               5.08 
+## 4  1980 Apr           15.9               0.508
+## 5  1980 May           21.8               0.508
+## 6  1980 Jun           29.9              10.9
 ```
 
 
 ```r
-## Using names_prefix is helpful when dealing with troublesome names
-
-bigfoot %&gt;% 
-  filter(year &gt;= 2018) %&gt;% 
-  group_by(state, year) %&gt;% 
-  summarize(n = n()) %&gt;% 
-  pivot_wider(names_from = year, values_from = n, names_prefix = "sightings_")
+weather_long %&gt;% 
+  separate(name, into = c("reading_type", "month"), sep = "_") %&gt;% 
+  pivot_wider(names_from = "reading_type", values_from = "value", names_glue= "pre_{reading_type}_post") %&gt;% head(6)
 ```
 
 ```
-## # A tibble: 37 × 5
-## # Groups:   state [37]
-##    state       sightings_2020 sightings_2021 sightings_2018 sightings_2019
-##    &lt;chr&gt;                &lt;int&gt;          &lt;int&gt;          &lt;int&gt;          &lt;int&gt;
-##  1 Alabama                  2              1             NA             NA
-##  2 Arizona                 NA              1             NA             NA
-##  3 Arkansas                NA             NA              2             NA
-##  4 California               2              2              2              3
-##  5 Colorado                 1              1              1              2
-##  6 Connecticut             NA             NA              2              2
-##  7 Florida                  1              3              2              1
-##  8 Georgia                 NA             NA              1              1
-##  9 Idaho                    4              3              1              1
-## 10 Illinois                 2              3             NA             NA
-## # … with 27 more rows
-```
----
-As mentioned earlier, `pivot_longer()` is the inverse of `pivot_wider`. With `pivot_longer()` you tell R the columns that you want to gather and then the name for the new column you are creating. Notice here the `:` operator which basically means "through". The `bigfoot_c` dataset is an example of a wide dataset. So here we are grabbing all variables from `Fall` through `Winter`.
-
-
-```r
-#?pivot_longer
-bigfoot_c_long &lt;- bigfoot_c %&gt;% 
-  pivot_longer(cols = Fall:Winter) 
-bigfoot_c_long &lt;- bigfoot_c_long %&gt;% 
-  rename(season = name, sightings = value)
-bigfoot_c_long
+## # A tibble: 6 × 4
+##    year month pre_meantemp_post pre_precipitation_post
+##   &lt;dbl&gt; &lt;chr&gt;             &lt;dbl&gt;                  &lt;dbl&gt;
+## 1  1980 Jan                5.51                 15.2  
+## 2  1980 Feb                7.19                 30.2  
+## 3  1980 Mar               10.3                   5.08 
+## 4  1980 Apr               15.9                   0.508
+## 5  1980 May               21.8                   0.508
+## 6  1980 Jun               29.9                  10.9
 ```
 
-```
-## # A tibble: 17,825 × 5
-##    county       state  year season  sightings
-##    &lt;chr&gt;        &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;
-##  1 Adams County Idaho  1990 Fall            1
-##  2 Adams County Idaho  1990 Spring         NA
-##  3 Adams County Idaho  1990 Summer         NA
-##  4 Adams County Idaho  1990 Unknown        NA
-##  5 Adams County Idaho  1990 Winter         NA
-##  6 Adams County Idaho  2009 Fall            1
-##  7 Adams County Idaho  2009 Spring         NA
-##  8 Adams County Idaho  2009 Summer         NA
-##  9 Adams County Idaho  2009 Unknown        NA
-## 10 Adams County Idaho  2009 Winter         NA
-## # … with 17,815 more rows
-```
-
-```r
-bigfoot_c_final &lt;- bigfoot_c_long %&gt;% 
-  group_by(state, year, season) %&gt;% 
-  summarize(sightings = sum(sightings, na.rm = TRUE))
-```
----
+--- 
 ### Exercise ###
 
 Using `new_df` below, create a new dataset that only has one observation per patient and contains both Systolic and Diastolic readings.
@@ -444,47 +492,44 @@ new_df %&gt;% pivot_wider(names_from = BP, names_prefix = "BP_", values_from = r
 ## 1       1    125     75
 ## 2       2    134     85
 ```
----
+
+--- 
+
 ### Merge Datasets Together
 
 I want to do a bit of prework to create dummy datasets that can be used to test out our join/merge functions. 
 
 
 ```r
-x &lt;- bigfoot %&gt;%
-  filter(year == 2010) %&gt;% 
-  select(state, year, season) %&gt;% 
-  arrange(state) %&gt;% 
+x &lt;- surveys_edit %&gt;%
+  select(species, hfl, wgt) %&gt;% 
   head(10) %&gt;% 
-  arrange(state) %&gt;% 
+  arrange(species) %&gt;% 
   mutate(data = "x")
 
-y &lt;- bigfoot_c_final %&gt;% 
-  filter(year == 2010 ) %&gt;% 
-  select(state, year, season) %&gt;% 
-  head(10) %&gt;% 
+y &lt;- species %&gt;% 
+  select(species, commonname) %&gt;% 
+  head(10) %&gt;%  
+  arrange(species) %&gt;% 
   mutate(data = "y")
-```
----
 
-```r
 x
 ```
 
 ```
 ## # A tibble: 10 × 4
-##    state       year season  data 
-##    &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;
-##  1 Alabama     2010 Spring  x    
-##  2 Arizona     2010 Spring  x    
-##  3 Arkansas    2010 Fall    x    
-##  4 Arkansas    2010 Fall    x    
-##  5 Arkansas    2010 Spring  x    
-##  6 Arkansas    2010 Fall    x    
-##  7 California  2010 Spring  x    
-##  8 California  2010 Summer  x    
-##  9 California  2010 Winter  x    
-## 10 California  2010 Unknown x
+##    species   hfl   wgt data 
+##    &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;
+##  1 DM         36    40 x    
+##  2 DM         34    37 x    
+##  3 DM         36    40 x    
+##  4 DS         47   117 x    
+##  5 DS         49   132 x    
+##  6 NA         NA    NA x    
+##  7 OL         NA    NA x    
+##  8 OL         NA    NA x    
+##  9 OT         NA    NA x    
+## 10 PF         15     7 x
 ```
 
 ```r
@@ -492,145 +537,149 @@ y
 ```
 
 ```
-## # A tibble: 10 × 4
-## # Groups:   state, year [2]
-##    state    year season  data 
-##    &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;
-##  1 Alabama  2010 Fall    y    
-##  2 Alabama  2010 Spring  y    
-##  3 Alabama  2010 Summer  y    
-##  4 Alabama  2010 Unknown y    
-##  5 Alabama  2010 Winter  y    
-##  6 Arizona  2010 Fall    y    
-##  7 Arizona  2010 Spring  y    
-##  8 Arizona  2010 Summer  y    
-##  9 Arizona  2010 Unknown y    
-## 10 Arizona  2010 Winter  y
+## # A tibble: 10 × 3
+##    species commonname                 data 
+##    &lt;chr&gt;   &lt;chr&gt;                      &lt;chr&gt;
+##  1 BA      Northern pygmy mouse       y    
+##  2 DM      Merriam's kangaroo rat     y    
+##  3 DO      Ord's kangaroo rat         y    
+##  4 DS      Banner-tailed kangaroo rat y    
+##  5 NA      White-throated woodrat     y    
+##  6 OL      Northern Grasshopper Mouse y    
+##  7 PB      Bailey's pocket mouse      y    
+##  8 PH      Hispid pocket mouse        y    
+##  9 PI      Rock pocket mouse          y    
+## 10 PP      Desert pocket mouse        y
 ```
+
 ---
+
 There are several types of joins (merges) that we can use. The one you use depends upon your specific needs.
 
 inner_join(): return all rows from x where there are matching values in y, and all columns from x and y. If there are multiple matches between x and y, all combination of the matches are returned.
 
 
 ```r
-inner_join(x, y, by = c("state", "year", "season"))
+inner_join(x, y, by = c("species")) %&gt;% head()
 ```
 
 ```
-## # A tibble: 2 × 5
-##   state    year season data.x data.y
-##   &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt; 
-## 1 Alabama  2010 Spring x      y     
-## 2 Arizona  2010 Spring x      y
+## # A tibble: 6 × 6
+##   species   hfl   wgt data.x commonname                 data.y
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;                      &lt;chr&gt; 
+## 1 DM         36    40 x      Merriam's kangaroo rat     y     
+## 2 DM         34    37 x      Merriam's kangaroo rat     y     
+## 3 DM         36    40 x      Merriam's kangaroo rat     y     
+## 4 DS         47   117 x      Banner-tailed kangaroo rat y     
+## 5 DS         49   132 x      Banner-tailed kangaroo rat y     
+## 6 NA         NA    NA x      White-throated woodrat     y
 ```
 
 left_join(): return all rows from x, and all columns from x and y. Rows in x with no match in y will have NA values in the new columns. If there are multiple matches between x and y, all combinations of the matches are returned.
 
 
 ```r
-left_join(x, y, by = c("state", "year", "season"))
+left_join(x, y, by = c("species")) %&gt;% head()
 ```
 
 ```
-## # A tibble: 10 × 5
-##    state       year season  data.x data.y
-##    &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; 
-##  1 Alabama     2010 Spring  x      y     
-##  2 Arizona     2010 Spring  x      y     
-##  3 Arkansas    2010 Fall    x      &lt;NA&gt;  
-##  4 Arkansas    2010 Fall    x      &lt;NA&gt;  
-##  5 Arkansas    2010 Spring  x      &lt;NA&gt;  
-##  6 Arkansas    2010 Fall    x      &lt;NA&gt;  
-##  7 California  2010 Spring  x      &lt;NA&gt;  
-##  8 California  2010 Summer  x      &lt;NA&gt;  
-##  9 California  2010 Winter  x      &lt;NA&gt;  
-## 10 California  2010 Unknown x      &lt;NA&gt;
+## # A tibble: 6 × 6
+##   species   hfl   wgt data.x commonname                 data.y
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;                      &lt;chr&gt; 
+## 1 DM         36    40 x      Merriam's kangaroo rat     y     
+## 2 DM         34    37 x      Merriam's kangaroo rat     y     
+## 3 DM         36    40 x      Merriam's kangaroo rat     y     
+## 4 DS         47   117 x      Banner-tailed kangaroo rat y     
+## 5 DS         49   132 x      Banner-tailed kangaroo rat y     
+## 6 NA         NA    NA x      White-throated woodrat     y
 ```
+
 ---
+
 right_join(): return all rows from y, and all columns from x and y. Rows in y with no match in x will have NA values in the new columns. If there are multiple matches between x and y, all combinations of the matches are returned.
 
 
 ```r
-right_join(x, y, by = c("state", "year", "season"))
+right_join(x, y, by = c("species")) %&gt;% head()
 ```
 
 ```
-## # A tibble: 10 × 5
-##    state    year season  data.x data.y
-##    &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; 
-##  1 Alabama  2010 Spring  x      y     
-##  2 Arizona  2010 Spring  x      y     
-##  3 Alabama  2010 Fall    &lt;NA&gt;   y     
-##  4 Alabama  2010 Summer  &lt;NA&gt;   y     
-##  5 Alabama  2010 Unknown &lt;NA&gt;   y     
-##  6 Alabama  2010 Winter  &lt;NA&gt;   y     
-##  7 Arizona  2010 Fall    &lt;NA&gt;   y     
-##  8 Arizona  2010 Summer  &lt;NA&gt;   y     
-##  9 Arizona  2010 Unknown &lt;NA&gt;   y     
-## 10 Arizona  2010 Winter  &lt;NA&gt;   y
+## # A tibble: 6 × 6
+##   species   hfl   wgt data.x commonname                 data.y
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;                      &lt;chr&gt; 
+## 1 DM         36    40 x      Merriam's kangaroo rat     y     
+## 2 DM         34    37 x      Merriam's kangaroo rat     y     
+## 3 DM         36    40 x      Merriam's kangaroo rat     y     
+## 4 DS         47   117 x      Banner-tailed kangaroo rat y     
+## 5 DS         49   132 x      Banner-tailed kangaroo rat y     
+## 6 NA         NA    NA x      White-throated woodrat     y
 ```
 
 full_join(): return all rows and all columns from both x and y. Where there are not matching values, returns NA for the one missing.
 
 
 ```r
-full_join(x, y, by = c("state", "year", "season"))
+full_join(x, y, by = c("species")) %&gt;% head()
 ```
 
 ```
-## # A tibble: 18 × 5
-##    state       year season  data.x data.y
-##    &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; 
-##  1 Alabama     2010 Spring  x      y     
-##  2 Arizona     2010 Spring  x      y     
-##  3 Arkansas    2010 Fall    x      &lt;NA&gt;  
-##  4 Arkansas    2010 Fall    x      &lt;NA&gt;  
-##  5 Arkansas    2010 Spring  x      &lt;NA&gt;  
-##  6 Arkansas    2010 Fall    x      &lt;NA&gt;  
-##  7 California  2010 Spring  x      &lt;NA&gt;  
-##  8 California  2010 Summer  x      &lt;NA&gt;  
-##  9 California  2010 Winter  x      &lt;NA&gt;  
-## 10 California  2010 Unknown x      &lt;NA&gt;  
-## 11 Alabama     2010 Fall    &lt;NA&gt;   y     
-## 12 Alabama     2010 Summer  &lt;NA&gt;   y     
-## 13 Alabama     2010 Unknown &lt;NA&gt;   y     
-## 14 Alabama     2010 Winter  &lt;NA&gt;   y     
-## 15 Arizona     2010 Fall    &lt;NA&gt;   y     
-## 16 Arizona     2010 Summer  &lt;NA&gt;   y     
-## 17 Arizona     2010 Unknown &lt;NA&gt;   y     
-## 18 Arizona     2010 Winter  &lt;NA&gt;   y
+## # A tibble: 6 × 6
+##   species   hfl   wgt data.x commonname                 data.y
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;                      &lt;chr&gt; 
+## 1 DM         36    40 x      Merriam's kangaroo rat     y     
+## 2 DM         34    37 x      Merriam's kangaroo rat     y     
+## 3 DM         36    40 x      Merriam's kangaroo rat     y     
+## 4 DS         47   117 x      Banner-tailed kangaroo rat y     
+## 5 DS         49   132 x      Banner-tailed kangaroo rat y     
+## 6 NA         NA    NA x      White-throated woodrat     y
 ```
+
 ---
+
 So now, let us try and merge together our datasets. 
 
 Let's try an inner join
 
 
 ```r
-# Notice that bigfoot has a unit of observation at the sighting level (each
-# individual sighting gets a row). I want to change this so that each observation
-# is at the state/year/season level to match up with the bigfoot_c_final 
-# dataset
+# Notice that surveys_edit has a unit of observation at the sighting level (each
+# individual sighting gets a row). 
 
-bigfoot_summed &lt;- bigfoot %&gt;% 
-  group_by(state, season, year) %&gt;% 
-  summarize(temperature = mean(temperature, na.rm = TRUE),
-            humidity = mean(humidity, na.rm = TRUE),
-            visibility = mean(visibility, na.rm = TRUE))
-
-# Let's try combining the two bigfoot datasets
-inner_join(bigfoot_summed, bigfoot_c_final, by = c("state", "year", "season"))
+# Let's try combining the two rodent datasets
+inner_join(species, surveys_edit, by = c("species"))  %&gt;% head()
 ```
 
-This worked well. Sometimes, the type of column may not match up. For example, year can sometimes be treated as a character or numeric variable. In this case, you would want to change one of the columns in one of the datasets to match the other.
-
+```
+## # A tibble: 6 × 12
+##   species scientifi…¹ commo…² grani…³ censusdate year  month day   treat…⁴ sex  
+##   &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;     &lt;dbl&gt; &lt;date&gt;     &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;
+## 1 BA      Baiomys ta… Northe…       1 1989-11-04 1989  11    04    exclos… M    
+## 2 BA      Baiomys ta… Northe…       1 1989-11-04 1989  11    04    exclos… M    
+## 3 BA      Baiomys ta… Northe…       1 1989-12-04 1989  12    04    exclos… M    
+## 4 BA      Baiomys ta… Northe…       1 1990-04-24 1990  04    24    exclos… M    
+## 5 BA      Baiomys ta… Northe…       1 1990-05-23 1990  05    23    exclos… F    
+## 6 BA      Baiomys ta… Northe…       1 1990-06-21 1990  06    21    exclos… F    
+## # … with 2 more variables: hfl &lt;dbl&gt;, wgt &lt;dbl&gt;, and abbreviated variable names
+## #   ¹​scientificname, ²​commonname, ³​granivore, ⁴​treatment
+```
 
 ```r
 # Let's save this
-bigfoot_final &lt;- inner_join(bigfoot_summed, bigfoot_c_final, by = c("state", "year", "season"))
+species_final &lt;- inner_join(species, surveys_edit, by = c("species"))
 ```
+
+Combining weather to rodent data.
+
+Let's first convert the month to an abbreviation and year to numeric in the `species_final` dataset and then join it to our weather_final data by year and month. 
+
+```r
+weather_rodents &lt;- species_final %&gt;% mutate(month = month.abb[as.numeric(month)], 
+                         year = as.numeric(year)) %&gt;% 
+  inner_join(weather_final, by = c("year", "month"))
+```
+
 ---
+
 ## Other ways to combine variables and cases
 
 The `join` functions have some intelligence to their actions. However, you can use a couple of `bind` functions to simply add variables or cases to existing datasets.
@@ -640,313 +689,167 @@ Use `bind_rows()` to paste tables below each other as they are.
 
 
 ```r
-a &lt;- bigfoot_final[1:3,]
-b &lt;- bigfoot_final[6:8,]
-a
+a &lt;- weather_rodents[1:3,]
+b &lt;- weather_rodents[800:802,]
+
+bind_rows(a, b)  %&gt;% head()
 ```
 
 ```
-## # A tibble: 3 × 7
-## # Groups:   state, season [1]
-##   state   season  year temperature humidity visibility sightings
-##   &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;
-## 1 Alabama Fall    1978       NaN     NaN        NaN            1
-## 2 Alabama Fall    1979        68.7     0.77       7.83         1
-## 3 Alabama Fall    1980       NaN     NaN        NaN            1
+## # A tibble: 6 × 14
+##   species scientifi…¹ commo…² grani…³ censusdate  year month day   treat…⁴ sex  
+##   &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;     &lt;dbl&gt; &lt;date&gt;     &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;
+## 1 BA      Baiomys ta… Northe…       1 1989-11-04  1989 Nov   04    exclos… M    
+## 2 BA      Baiomys ta… Northe…       1 1989-11-04  1989 Nov   04    exclos… M    
+## 3 BA      Baiomys ta… Northe…       1 1989-12-04  1989 Dec   04    exclos… M    
+## 4 PB      Chaetodipu… Bailey…       1 2000-07-22  2000 Jul   22    control M    
+## 5 PB      Chaetodipu… Bailey…       1 2000-07-22  2000 Jul   22    control F    
+## 6 PB      Chaetodipu… Bailey…       1 2000-07-22  2000 Jul   22    control M    
+## # … with 4 more variables: hfl &lt;dbl&gt;, wgt &lt;dbl&gt;, meantemp &lt;dbl&gt;,
+## #   precipitation &lt;dbl&gt;, and abbreviated variable names ¹​scientificname,
+## #   ²​commonname, ³​granivore, ⁴​treatment
 ```
+
 
 ```r
-b
+c &lt;- weather_rodents[, 2]
+d &lt;- weather_rodents[, 8]
+
+bind_cols(c, d) %&gt;% head()
 ```
 
 ```
-## # A tibble: 3 × 7
-## # Groups:   state, season [1]
-##   state   season  year temperature humidity visibility sightings
-##   &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;
-## 1 Alabama Fall    1990       NaN     NaN        NaN            1
-## 2 Alabama Fall    1994        76.6     0.79       5.77         1
-## 3 Alabama Fall    1999        56.2     0.63       8.28         2
+## # A tibble: 6 × 2
+##   scientificname  day  
+##   &lt;chr&gt;           &lt;chr&gt;
+## 1 Baiomys taylori 04   
+## 2 Baiomys taylori 04   
+## 3 Baiomys taylori 04   
+## 4 Baiomys taylori 24   
+## 5 Baiomys taylori 23   
+## 6 Baiomys taylori 21
 ```
+
 ---
 
-```r
-bind_rows(a, b)
-```
-
-```
-## # A tibble: 6 × 7
-## # Groups:   state, season [1]
-##   state   season  year temperature humidity visibility sightings
-##   &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;
-## 1 Alabama Fall    1978       NaN     NaN        NaN            1
-## 2 Alabama Fall    1979        68.7     0.77       7.83         1
-## 3 Alabama Fall    1980       NaN     NaN        NaN            1
-## 4 Alabama Fall    1990       NaN     NaN        NaN            1
-## 5 Alabama Fall    1994        76.6     0.79       5.77         1
-## 6 Alabama Fall    1999        56.2     0.63       8.28         2
-```
----
-
-```r
-c &lt;- bigfoot_final[, 1]
-d &lt;- bigfoot_final[, 3]
-c
-```
-
-```
-## # A tibble: 2,447 × 1
-## # Groups:   state [49]
-##    state  
-##    &lt;chr&gt;  
-##  1 Alabama
-##  2 Alabama
-##  3 Alabama
-##  4 Alabama
-##  5 Alabama
-##  6 Alabama
-##  7 Alabama
-##  8 Alabama
-##  9 Alabama
-## 10 Alabama
-## # … with 2,437 more rows
-```
-
-```r
-d
-```
-
-```
-## # A tibble: 2,447 × 1
-##     year
-##    &lt;dbl&gt;
-##  1  1978
-##  2  1979
-##  3  1980
-##  4  1981
-##  5  1983
-##  6  1990
-##  7  1994
-##  8  1999
-##  9  2000
-## 10  2001
-## # … with 2,437 more rows
-```
----
-
-```r
-bind_cols(c, d)
-```
-
-```
-## # A tibble: 2,447 × 2
-## # Groups:   state [49]
-##    state    year
-##    &lt;chr&gt;   &lt;dbl&gt;
-##  1 Alabama  1978
-##  2 Alabama  1979
-##  3 Alabama  1980
-##  4 Alabama  1981
-##  5 Alabama  1983
-##  6 Alabama  1990
-##  7 Alabama  1994
-##  8 Alabama  1999
-##  9 Alabama  2000
-## 10 Alabama  2001
-## # … with 2,437 more rows
-```
----
-# Further Cleaning
-Let's use some of our skills to get the total number of barrels of beer being produced. 
-Here we are going to use a function from the `stringr` package called `str_replace_all`. This is essentially a find and replace for character variables.
-
-
-```r
-## Fixing the names for beer production
-names(beer_wide) &lt;- str_replace_all(names(beer_wide),
-                                    " ", "")
-```
----
-I now want to get the total number of barrels of beer produced by combining three different columns. I could do a simple addition here, but I want to show the  `rowSums` function, which will sum up across multiple columns.
-
-
-```r
-beer_wide_final &lt;- beer_wide %&gt;% 
-  mutate(barrels = rowSums(across(OnPremises:KegsandBarrels))) %&gt;% 
-  select(state, year, barrels) 
-```
----
-Now we can add Beer Production to our larger bigfoot dataset
-
-
-```r
-beer_wide_final %&gt;% inner_join(bigfoot_final, c("state", "year")) 
-```
-
-```
-## # A tibble: 0 × 8
-## # … with 8 variables: state &lt;chr&gt;, year &lt;dbl&gt;, barrels &lt;dbl&gt;, season &lt;chr&gt;,
-## #   temperature &lt;dbl&gt;, humidity &lt;dbl&gt;, visibility &lt;dbl&gt;, sightings &lt;dbl&gt;
-```
-
-```r
-# Uh oh, notice the difference in the way states are shown. 
-# Fortunately, we can use a built in dataset that has the conversion
-# of abbreviations to full state names
-
-state_change &lt;- bind_cols(state.abb, state.name) 
-names(state_change) &lt;- c("state_abb", "state")
-
-beer &lt;- beer_wide_final %&gt;% 
-  inner_join(state_change, by = c("state" = "state_abb")) %&gt;% 
-  select(state = state.y, year, barrels)
-
-beerfoot &lt;- beer %&gt;% inner_join(bigfoot_final, c("state", "year")) 
-# Much better
-```
----
 ## Visualizing our new dataset
 
-Let's explore our new `beerfoot` dataset.
+Let's explore our new `weather_rodents` dataset.
 
-Are the number of barrels of beer produced and the number of bigfoot sightings
-related?
+Is the weight of rodents and temperature in the desert related?
+
+Let's check at a specific species of rodent.
 
 
 ```r
-beerfoot %&gt;% 
+weather_rodents %&gt;% 
+  filter(species == "DO") %&gt;% 
   ggplot() +
-  geom_point(aes(barrels, sightings))
+  geom_point(aes(meantemp, wgt))
 ```
 
-&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-30-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-24-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
 
 ```r
 # Unsure at this point. May need to work through this in 
 # another way.
 ```
 ---
-Before moving forward I want to aggregate our data to be per year. The `summarize` and `mutate` function have a series of helper functions that allow you to make changes to specific variable types or variable groups. Below, we are going to use the `across` function that will allow us to walk across the columns that are numeric and find the mean for each of these columns.
+
+Before moving forward I want to aggregate our data to be per year and species. The `summarize` and `mutate` function have a series of helper functions that allow you to make changes to specific variable types or variable groups. Below, we are going to use the `across` function that will allow us to walk across the columns that are numeric and find the mean for each of these columns.
 
 
 ```r
-beer_summed &lt;- beerfoot %&gt;% 
-  group_by(year) %&gt;% 
+final_data &lt;- weather_rodents %&gt;% 
+  group_by(species, year) %&gt;% 
   summarize(across(
     .cols = where(is.numeric),
     .fns = list(mean), na.rm = TRUE)
-  ) %&gt;% select(-sightings_1)
-
-bf_counts &lt;- beerfoot %&gt;% 
-  group_by(year) %&gt;% count() 
+  ) %&gt;% 
+  arrange(species, year)
 ```
 
 Here I am renaming a bunch of column names that were renamed above by using the `str_replace` function.
 
 
 ```r
-names(beer_summed) &lt;- str_replace(names(beer_summed), "_1", "")
-
-bf &lt;- beer_summed %&gt;% inner_join(bf_counts, by = c("year"))
+names(final_data) &lt;- str_replace(names(final_data), "_1", "")
 ```
 ---
 Let us try and see if we can better visualize the data we have. 
 
 
 ```r
-bf %&gt;% 
+final_data %&gt;% 
   ggplot() +
-  geom_point(aes(n, barrels ))
+  geom_point(aes(wgt, meantemp))
 ```
 
-&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-33-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-27-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
 
-Seems like a relationship may be here.
+Seems like no real relationship here.
 ---
+
 Let's visually look at this data using a new geom type, `geom_line`. The line graph works well on longitudinal/panel data. 
 
 
 ```r
-bf %&gt;% 
-  ggplot(aes(year, n)) +
+final_data %&gt;% 
+  filter(species == "DO") %&gt;% 
+  ggplot(aes(year, wgt)) +
   geom_point() + geom_line() 
 ```
 
-&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-34-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-28-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
 ---
-
-```r
-# Converting year to factor helps us to discretize the x axis
-bf %&gt;% 
-  ggplot(aes(as.factor(year), n)) +
-  geom_point() + geom_line() 
-```
-
-&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-35-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-This works well, but I would like to be able to look across different states and compare. To be able to label each state, I want to use the `ggrepel` package which allows you to label portions of your graph.
+This works well, but I would like to be able to look across different species and compare. To be able to label each species, I want to use the `ggrepel` package which allows you to label portions of your graph.
 
 
 ```r
 #install.packages("ggrepel")
 library(ggrepel)
 
-states &lt;- c("Oregon", "Washington", "California")
-bigfoot_c_final %&gt;% 
-  filter(year &gt; 2000 &amp; states %in% state) %&gt;% 
-  group_by(year, state) %&gt;% 
-  summarize(sightings = mean(sightings, na.rm = TRUE)) %&gt;% 
-  mutate(state_label = if_else(year == 2020, paste0(state), "")) %&gt;%
-  ggplot(aes(year, sightings, color= state)) +
-  geom_point()  + geom_line() + geom_text_repel(aes(label = state_label)) + theme_classic() + 
+specs &lt;- c("DO", "OT", "PE")
+final_data %&gt;% 
+  filter(year &gt; 2000 &amp; species %in% specs) %&gt;% 
+  group_by(year, species) %&gt;% 
+  mutate(species_label = if_else(year == 2022, paste0(species), "")) %&gt;%
+  ggplot(aes(year, wgt, color= species)) +
+  geom_point()  + geom_line() + geom_text_repel(aes(label = species_label)) + theme_classic() + 
   theme(legend.position = "none") 
 ```
 
-&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-36-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-29-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
 ---
+Finally, I want to show the relationship between rodent weight and mean temperature. To do this, I am adding a secondary axis to be able to put both of these variables on the plot at the same time. 
 
 
 ```r
-bf   %&gt;% 
-  mutate(barrel_label = paste0(round(barrels, 0), " barrels")) %&gt;% 
-  ggplot(aes(year, n, color = barrels)) +
-  geom_point() + 
-  geom_line() + 
-  geom_text_repel(aes(label = barrel_label)) + 
-  theme(legend.position = "none")
-```
-
-&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-37-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
----
-
-Finally, I want to show the relationship between beer barrels produced and bigfoot sightings. To do this, I am adding a secondary axis to be able to put both of these variables on the plot at the same time. 
-
-
-```r
-bf  %&gt;% 
-  mutate( year = as.factor(year)) %&gt;% 
-ggplot(aes(x=year,  group = 1)) +
-  geom_line(aes(y=n), color = "blue", linewidth = 1) + 
-  geom_line(aes(y=barrels/100000), color = "red", linewidth = 1) +
+final_data  %&gt;% 
+    filter(species %in% specs) %&gt;% 
+  group_by(year, species) %&gt;% 
+  ggplot(aes(x=year, group = species)) +
+  geom_line(aes(y=wgt, color = species), linewidth = 1) + 
+  geom_line(aes(y=meantemp, group = 1), color = "black", linewidth = 1) +
   scale_y_continuous(
     # Features of the first axis
-    name = "Number of Bigfoot Sightings",
+    name = "Weight of the rodent (g)",
     # Add a second axis and specify its features
-    sec.axis = sec_axis(~., name="Number of Barrels (*100000)")
+    sec.axis = sec_axis(~., name="Temperature (C)")
   ) + theme_classic() + 
-  theme(axis.line.y.right = element_line(color = "red"), 
-        axis.ticks.y.right = element_line(color = "red"),
-        axis.text.y.right = element_text(color = "red"),
-        axis.title.y.right = element_text(color = "red"),
+  theme(axis.line.y.right = element_line(color = "black"), 
+        axis.ticks.y.right = element_line(color = "black"),
+        axis.text.y.right = element_text(color = "black"),
+        axis.title.y.right = element_text(color = "black"),
         axis.line.y.left = element_line(color = "blue"), 
         axis.ticks.y.left = element_line(color = "blue"),
         axis.text.y.left = element_text(color = "blue"),
         axis.title.y.left = element_text(color = "blue"))
 ```
 
-&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-38-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-30-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
 
-So the more beer we make, the fewer bigfoot sightings? Maybe?
+Unclear conclusions here unfortunately.
 ---
 # Extra Information to help clean data
 
@@ -954,132 +857,190 @@ The final piece I want to look at are similar to the `across` function and they 
 
 
 ```r
-vars &lt;- c("barrels", "visibility", "humidity", "temperature")
-beerfoot %&gt;% 
-  group_by(season) %&gt;% 
+vars &lt;- c("hfl", "wgt", "meantemp", "precipitation")
+final_data %&gt;% 
+  group_by(year, granivore) %&gt;% 
   mutate_at(vars, c(mean, sd), na.rm = TRUE) %&gt;% 
-  select_if(is.numeric)
+  select_if(is.numeric) %&gt;% head()
 ```
 
 ```
-## # A tibble: 641 × 15
-## # Groups:   season [5]
-##    season  year barrels temper…¹ humid…² visib…³ sight…⁴ barre…⁵ visib…⁶ humid…⁷
-##    &lt;chr&gt;  &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-##  1 Fall    2008 134207.     45.2   0.56   NaN          1  6.43e6    8.49   0.721
-##  2 Spring  2008 134207.     41.1   0.5     10          1  6.15e6    8.42   0.673
-##  3 Summer  2009 144304.     54.4   0.73     5.73       1  6.17e6    8.52   0.712
-##  4 Fall    2008     NA      67.0   0.805    8.64       2  6.43e6    8.49   0.721
-##  5 Spring  2008     NA      41.1   0.745    7.68       2  6.15e6    8.42   0.673
-##  6 Winter  2008     NA      41.7   0.76     9.06       2  6.02e6    8.14   0.728
-##  7 Winter  2009     NA      47.8   0.51    10          1  6.02e6    8.14   0.728
-##  8 Spring  2010     NA      53.6   0.73     8.85       1  6.15e6    8.42   0.673
-##  9 Spring  2011   2469.     63.9   0.65     9.5        1  6.15e6    8.42   0.673
-## 10 Fall    2012   8986.     51.3   0.51     9.8        1  6.43e6    8.49   0.721
-## # … with 631 more rows, 5 more variables: temperature_fn1 &lt;dbl&gt;,
-## #   barrels_fn2 &lt;dbl&gt;, visibility_fn2 &lt;dbl&gt;, humidity_fn2 &lt;dbl&gt;,
-## #   temperature_fn2 &lt;dbl&gt;, and abbreviated variable names ¹​temperature,
-## #   ²​humidity, ³​visibility, ⁴​sightings, ⁵​barrels_fn1, ⁶​visibility_fn1,
-## #   ⁷​humidity_fn1
+## # A tibble: 6 × 14
+## # Groups:   year, granivore [6]
+##    year granivore   hfl   wgt meantemp precipi…¹ hfl_fn1 wgt_fn1 meant…² preci…³
+##   &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1  1989         1  13    7       10.0      0.762    25.2    32.4    14.4   15.8 
+## 2  1990         1  13.9  8.29    17.4     22.0      25.6    33.1    15.9   21.6 
+## 3  1991         1  12.8  9.6     13.5     40.8      21.4    21.5    16.3   39.4 
+## 4  1992         1  12    7.83     7.89    28.3      25.2    33.5    17.7   35.2 
+## 5  2007         1  13.3  8.57    14.4     11.4      22.2    23.2    17.5   14.3 
+## 6  2008         1  13.9  9.13    20.2      1.04     24.7    31.3    18.1    9.21
+## # … with 4 more variables: hfl_fn2 &lt;dbl&gt;, wgt_fn2 &lt;dbl&gt;, meantemp_fn2 &lt;dbl&gt;,
+## #   precipitation_fn2 &lt;dbl&gt;, and abbreviated variable names ¹​precipitation,
+## #   ²​meantemp_fn1, ³​precipitation_fn1
 ```
+
 ---
 
+
 ```r
-beerfoot %&gt;% 
-  group_by(season) %&gt;% 
+final_data %&gt;% 
+  group_by(year, granivore) %&gt;% 
   summarize_at(vars, c(mean, sd), na.rm = TRUE) %&gt;% 
-  select_if(is.numeric)
+  select_if(is.numeric) %&gt;% head()
 ```
 
 ```
-## # A tibble: 5 × 8
-##   barrels_fn1 visibility_fn1 humidity_…¹ tempe…² barre…³ visib…⁴ humid…⁵ tempe…⁶
-##         &lt;dbl&gt;          &lt;dbl&gt;       &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1    6429266.           8.49       0.721    53.7  7.71e6    2.17  0.138   13.2  
-## 2    6152746.           8.42       0.673    57.2  7.65e6    2.35  0.167   12.9  
-## 3    6166664.           8.52       0.712    68.1  7.45e6    2.15  0.141   12.5  
-## 4   11395121.           6.00       0.815    36.0  1.41e7    2.64  0.0778   0.453
-## 5    6019658.           8.14       0.728    41.6  7.60e6    2.44  0.147   14.6  
-## # … with abbreviated variable names ¹​humidity_fn1, ²​temperature_fn1,
-## #   ³​barrels_fn2, ⁴​visibility_fn2, ⁵​humidity_fn2, ⁶​temperature_fn2
+## # A tibble: 6 × 10
+## # Groups:   year [3]
+##    year graniv…¹ hfl_fn1 wgt_fn1 meant…² preci…³ hfl_fn2 wgt_fn2 meant…⁴ preci…⁵
+##   &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1  1980        0    24.3    63.4    13.1    17.5    7.02    60.7    3.65    8.94
+## 2  1980        1    27.6    37.1    15.1    22.8   12.7     38.6    4.10    5.97
+## 3  1981        0    24.9    70.7    14.0    37.0    6.78    72.4    3.09    7.54
+## 4  1981        1    27.2    35.6    14.5    40.2   12.3     38.1    4.02   10.8 
+## 5  1982        0    24.3    70.2    17.1    33.5    7.29    69.0    2.54    4.88
+## 6  1982        1    25.6    31.4    17.5    33.0   11.8     31.7    3.29    7.28
+## # … with abbreviated variable names ¹​granivore, ²​meantemp_fn1,
+## #   ³​precipitation_fn1, ⁴​meantemp_fn2, ⁵​precipitation_fn2
 ```
+
+---
+
 
 ```r
 my_function &lt;- function(x) { 
   paste0("new ", x)
 }
 
-beerfoot %&gt;% 
-  mutate_if(is.character, my_function)
+species_final %&gt;% 
+  ungroup() %&gt;% 
+  mutate_if(is.character, my_function) %&gt;% head()
 ```
 
 ```
-## # A tibble: 641 × 8
-##    state        year barrels season     temperature humidity visibility sighti…¹
-##    &lt;chr&gt;       &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;    &lt;dbl&gt;
-##  1 new Alaska   2008 134207. new Fall          45.2    0.56      NaN           1
-##  2 new Alaska   2008 134207. new Spring        41.1    0.5        10           1
-##  3 new Alaska   2009 144304. new Summer        54.4    0.73        5.73        1
-##  4 new Alabama  2008     NA  new Fall          67.0    0.805       8.64        2
-##  5 new Alabama  2008     NA  new Spring        41.1    0.745       7.68        2
-##  6 new Alabama  2008     NA  new Winter        41.7    0.76        9.06        2
-##  7 new Alabama  2009     NA  new Winter        47.8    0.51       10           1
-##  8 new Alabama  2010     NA  new Spring        53.6    0.73        8.85        1
-##  9 new Alabama  2011   2469. new Spring        63.9    0.65        9.5         1
-## 10 new Alabama  2012   8986. new Fall          51.3    0.51        9.8         1
-## # … with 631 more rows, and abbreviated variable name ¹​sightings
+## # A tibble: 6 × 12
+##   species scientifi…¹ commo…² grani…³ censusdate year  month day   treat…⁴ sex  
+##   &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;     &lt;dbl&gt; &lt;date&gt;     &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;
+## 1 new BA  new Baiomy… new No…       1 1989-11-04 new … new … new … new ex… new M
+## 2 new BA  new Baiomy… new No…       1 1989-11-04 new … new … new … new ex… new M
+## 3 new BA  new Baiomy… new No…       1 1989-12-04 new … new … new … new ex… new M
+## 4 new BA  new Baiomy… new No…       1 1990-04-24 new … new … new … new ex… new M
+## 5 new BA  new Baiomy… new No…       1 1990-05-23 new … new … new … new ex… new F
+## 6 new BA  new Baiomy… new No…       1 1990-06-21 new … new … new … new ex… new F
+## # … with 2 more variables: hfl &lt;dbl&gt;, wgt &lt;dbl&gt;, and abbreviated variable names
+## #   ¹​scientificname, ²​commonname, ³​granivore, ⁴​treatment
 ```
----
 
 ```r
-beerfoot %&gt;% 
-  select(6:8) %&gt;% 
-  mutate_all(my_function)
+final_data %&gt;% 
+  select(3:5) %&gt;% 
+  mutate_all(my_function) %&gt;% head()
 ```
 
 ```
-## # A tibble: 641 × 3
-##    humidity  visibility sightings
-##    &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;    
-##  1 new 0.56  new NaN    new 1    
-##  2 new 0.5   new 10     new 1    
-##  3 new 0.73  new 5.73   new 1    
-##  4 new 0.805 new 8.645  new 2    
-##  5 new 0.745 new 7.68   new 2    
-##  6 new 0.76  new 9.06   new 2    
-##  7 new 0.51  new 10     new 1    
-##  8 new 0.73  new 8.85   new 1    
-##  9 new 0.65  new 9.5    new 1    
-## 10 new 0.51  new 9.8    new 1    
-## # … with 631 more rows
+## # A tibble: 6 × 4
+## # Groups:   species [1]
+##   species granivore hfl                  wgt                 
+##   &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;                &lt;chr&gt;               
+## 1 BA      new 1     new 13               new 7               
+## 2 BA      new 1     new 13.8571428571429 new 8.28571428571429
+## 3 BA      new 1     new 12.85            new 9.6             
+## 4 BA      new 1     new 12               new 7.83333333333333
+## 5 BA      new 1     new 13.2857142857143 new 8.57142857142857
+## 6 BA      new 1     new 13.875           new 9.13333333333333
 ```
+
+---
+
 
 ```r
 replace_function &lt;- function(x) {
   ifelse(is.na(x), -1, x)
 }
 
-beerfoot %&gt;% 
-  select(3:8) %&gt;% 
+surveys_edit %&gt;% 
+  select(7:9) %&gt;% 
   mutate_all(replace_function)
 ```
 
 ```
-## # A tibble: 641 × 6
-##    barrels season temperature humidity visibility sightings
-##      &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;
-##  1 134207. Fall          45.2    0.56       -1            1
-##  2 134207. Spring        41.1    0.5        10            1
-##  3 144304. Summer        54.4    0.73        5.73         1
-##  4     -1  Fall          67.0    0.805       8.64         2
-##  5     -1  Spring        41.1    0.745       7.68         2
-##  6     -1  Winter        41.7    0.76        9.06         2
-##  7     -1  Winter        47.8    0.51       10            1
-##  8     -1  Spring        53.6    0.73        8.85         1
-##  9   2469. Spring        63.9    0.65        9.5          1
-## 10   8986. Fall          51.3    0.51        9.8          1
-## # … with 631 more rows
+## # A tibble: 28,364 × 3
+##    sex     hfl   wgt
+##    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 -1       -1    -1
+##  2 -1       -1    -1
+##  3 M        15     7
+##  4 -1       -1    -1
+##  5 M        36    40
+##  6 F        34    37
+##  7 F        47   117
+##  8 M        36    40
+##  9 M        49   132
+## 10 -1       -1    -1
+## # … with 28,354 more rows
 ```
+
+---
+### Creating Multiple Plots
+
+Finally, when doing a research study, you often want to look at many graphs of variables/observations. This could take a long time if you do it one by one. If, in this case, we want to look at a graph for each individual species of rodent, we would have to create 21 separate graphs, which would be many lines of code. Or, you can use a function or a loop to programmatically create and save graphs. Functions would probably be a better way to do this, but I am going to show how to use loops in R, given our time. 
+
+
+```r
+final_data %&gt;% 
+  filter(species == "DO") %&gt;% 
+  ggplot(aes(year, wgt)) +
+  geom_point() + geom_line() +
+  labs(title = "DO")
+```
+
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-35-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```r
+# This for loop will walk through each object in the specs vector and
+# put it in the print() function one at a time. 
+for (i in specs) { 
+  print(i)
+}
+
+# The same concept applies here, except it is more complicated. But,
+# essentially each time you see `i` it is being replaced with 
+# the current object in the specs vector.
+for (i in specs) { 
+  temp &lt;- final_data %&gt;% 
+    filter(species == i) %&gt;% 
+    ggplot(aes(year, wgt)) +
+    geom_point() + geom_line() +
+    labs(title = i)
+  print(temp)
+  ggsave(filename = paste0(i, ".png"), width = 8, height = 8)
+}
+```
+
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-36-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-36-2.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-36-3.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
+
+
+```r
+cols &lt;- c("wgt", "precipitation", "hfl", "meantemp")
+## Going over columns can be a bit more complicated, since you have to 
+## use the .date[[i]] notation in order to reference the column 
+## within the aes call.
+for (i in cols) { 
+  temp &lt;- final_data %&gt;% 
+    filter(species == "DO") %&gt;% 
+    ggplot(aes(year, .data[[i]])) +
+    geom_point() + geom_line() +
+    labs(title = i)
+  print(temp)
+  ggsave(filename = paste0(i, ".png"), width = 8, height = 8)
+}
+```
+
+&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-37-1.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-37-2.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-37-3.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;&lt;img src="datawrangling_slides_files/figure-html/unnamed-chunk-37-4.svg" width="50%" height="50%" style="display: block; margin: auto;" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
